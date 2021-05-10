@@ -50,23 +50,23 @@ namespace cbm {
         }
 
         // iterations
-        // size_t max_iterations = 100;
-        // double step_size = 1.0 / max_iterations;
-        // double learning_rate = step_size;
         double learning_rate = learning_rate_step_size;
         double rmse0 = std::numeric_limits<double>::infinity();
-        // double eps = 1e-3;
 
         for (size_t t=0;t<max_iterations;t++,learning_rate+=learning_rate_step_size) {
-            // std::cout << "learning rate " << learning_rate << std::endl; 
+            // cap at 1
+            if (learning_rate > 1)
+                learning_rate = 1;
+
             // reset y_hat_sum
             for (size_t j=0;j<n_features;j++)
                 std::fill(y_hat_sum[j].begin(), y_hat_sum[j].end(), 0);
 
             // compute y_hat and y_hat_sum
+            // Note: deviation from the paper as f is 
             for (size_t i=0;i<n_examples;i++) {
                 // TODO: parallelize & vectorize
-                // TODO: log?
+                // TODO: use log to stabilize?
                 auto y_hat_i = _y_mean;
                 for (size_t j=0;j<n_features;j++)
                     y_hat_i *= _f[j][x[j][i]];
@@ -76,15 +76,19 @@ namespace cbm {
             }
 
             // compute g
+            // TODO: parallelize
             for (size_t j=0;j<n_features;j++) {
                 for (size_t k=0;k<x_max[j];k++) {
-                    // TODO: learning rate exp(rate[t] * log(a/b))
-                    // f[j][k] *= (double)y_sum[j][k] / y_hat_sum[j][k];
 
                     // TODO: check if a bin is empty. might be better to remap/exclude the bins?
                     if (y_sum[j][k]) {
                         // improve stability
-                        _f[j][k] *= exp(learning_rate * log((double)y_sum[j][k] / y_hat_sum[j][k]));
+                        double g = (double)y_sum[j][k] / y_hat_sum[j][k]; // eqn. 2 (a)
+
+                        if (learning_rate == 1)
+                            _f[j][k] *= g;
+                        else
+                            _f[j][k] *= exp(learning_rate * log(g)); // eqn 2 (b) + eqn 4
 
                         // magic numbers found in Regularization
                         // _f[j][k] *= exp(learning_rate * log((double)(1 + y_sum[j][k]) / (1.67834 + y_hat_sum[j][k])));
@@ -105,7 +109,8 @@ namespace cbm {
             }
             rmse = sqrt(rmse);
 
-            // check for early sotpping
+            // check for early stopping
+            // TODO: expose minimum number of rounds
             if (t > 20 && (rmse > rmse0 || (rmse0 - rmse) < epsilon_early_stopping)) {
                 // TODO: record diagnostics?
                 // printf("early stopping %1.4f vs %1.4f after t=%d\n", rmse, rmse0, (int)t);
@@ -113,14 +118,6 @@ namespace cbm {
             }
             rmse0 = rmse;
         }
-
-        // std::cout << std::endl << "### f" << std::endl;
-        // for (size_t j=0;j<n_features;j++) {
-        //     for (auto k=0;k<x_max[j];k++) {
-        //         printf("%1.2f (%4d) ", f[j][k], bin_count[j][k]);
-        //     }
-        //     std::cout << std::endl;
-        // }
     }
 
     std::vector<double> CBM::predict(

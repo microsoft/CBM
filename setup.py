@@ -42,7 +42,7 @@ setup(
             ["src/pycbm.cpp", "src/cbm.cpp"],
             include_dirs=[get_pybind_include(), get_pybind_include(user=True)],
             extra_compile_args=sysconfig.get_config_var("CFLAGS").split()
-            + ["-std=c++11", "-Wall", "-Wextra"],
+            + ["-std=c++11", "-Wall", "-Wextra", "-march=native", "-msse2", "-ffast-math", "-mfpmath=sse"],
             libraries=["stdc++"],
             language="c++11",
         )
