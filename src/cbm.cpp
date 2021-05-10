@@ -41,6 +41,8 @@ namespace cbm {
             // alloc and store columnar
             x[j].reserve(n_examples);
             for (size_t i=0;i<n_examples;i++) {
+                // https://docs.python.org/3/c-api/buffer.html#complex-arrays
+                // strides are expressed in char not target type
                 uint8_t x_ij = *reinterpret_cast<const uint8_t*>(x_data + i * x_stride0 + j * x_stride1);
                 x[j].push_back(x_ij);
 
@@ -85,13 +87,13 @@ namespace cbm {
                         // improve stability
                         double g = (double)y_sum[j][k] / y_hat_sum[j][k]; // eqn. 2 (a)
 
+                        // magic numbers found in Regularization section (worsen it quite a bit)
+                        // double g = (2.0 * y_sum[j][k]) / (1.67834 * y_hat_sum[j][k]); // eqn. 2 (a)
+
                         if (learning_rate == 1)
                             _f[j][k] *= g;
                         else
-                            _f[j][k] *= exp(learning_rate * log(g)); // eqn 2 (b) + eqn 4
-
-                        // magic numbers found in Regularization
-                        // _f[j][k] *= exp(learning_rate * log((double)(1 + y_sum[j][k]) / (1.67834 + y_hat_sum[j][k])));
+                            _f[j][k] *= std::exp(learning_rate * std::log(g)); // eqn 2 (b) + eqn 4
                     }
                 }
             }
@@ -107,7 +109,7 @@ namespace cbm {
             
                 rmse += (y_hat_i - y[i]) * (y_hat_i - y[i]);
             }
-            rmse = sqrt(rmse);
+            rmse = std::sqrt(rmse);
 
             // check for early stopping
             // TODO: expose minimum number of rounds
