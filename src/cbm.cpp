@@ -5,6 +5,33 @@
 #include <cmath>
 
 namespace cbm {
+    void CBM::update_y_hat_sum(
+        std::vector<std::vector<uint64_t>>& y_hat_sum,
+        std::vector<std::vector<uint8_t>>& x,
+        size_t n_examples,
+        size_t n_features) {
+
+        // reset y_hat_sum
+        for (size_t j=0;j<n_features;j++)
+            std::fill(y_hat_sum[j].begin(), y_hat_sum[j].end(), 0);
+
+        // compute y_hat and y_hat_sum
+        for (size_t i=0;i<n_examples;i++) {
+            // TODO: parallelize & vectorize
+            // TODO: use log to stabilize?
+            auto y_hat_i = _y_mean;
+            for (size_t j=0;j<n_features;j++)
+                y_hat_i *= _f[j][x[j][i]];
+
+            for (size_t j=0;j<n_features;j++)
+                y_hat_sum[j][x[j][i]] += y_hat_i;
+        }
+    }
+
+    std::vector<std::vector<double>>& CBM::get_weights() {
+        return _f;
+    }
+
     void CBM::fit(
         const uint32_t* y,
         const char* x_data,
@@ -16,7 +43,9 @@ namespace cbm {
         const uint8_t* x_max,
         double learning_rate_step_size,
         size_t max_iterations,
-        double epsilon_early_stopping) {
+        size_t min_iterations_early_stopping,
+        double epsilon_early_stopping,
+        bool single_update_per_iteration) {
 
         _y_mean = y_mean;
 
@@ -54,28 +83,13 @@ namespace cbm {
         // iterations
         double learning_rate = learning_rate_step_size;
         double rmse0 = std::numeric_limits<double>::infinity();
-
+ 
         for (size_t t=0;t<max_iterations;t++,learning_rate+=learning_rate_step_size) {
             // cap at 1
             if (learning_rate > 1)
                 learning_rate = 1;
 
-            // reset y_hat_sum
-            for (size_t j=0;j<n_features;j++)
-                std::fill(y_hat_sum[j].begin(), y_hat_sum[j].end(), 0);
-
-            // compute y_hat and y_hat_sum
-            // Note: deviation from the paper as f is 
-            for (size_t i=0;i<n_examples;i++) {
-                // TODO: parallelize & vectorize
-                // TODO: use log to stabilize?
-                auto y_hat_i = _y_mean;
-                for (size_t j=0;j<n_features;j++)
-                    y_hat_i *= _f[j][x[j][i]];
-
-                for (size_t j=0;j<n_features;j++)
-                    y_hat_sum[j][x[j][i]] += y_hat_i;
-            }
+            update_y_hat_sum(y_hat_sum, x, n_examples, n_features);
 
             // compute g
             // TODO: parallelize
@@ -94,6 +108,9 @@ namespace cbm {
                             _f[j][k] *= g;
                         else
                             _f[j][k] *= std::exp(learning_rate * std::log(g)); // eqn 2 (b) + eqn 4
+
+                        if (!single_update_per_iteration)
+                            update_y_hat_sum(y_hat_sum, x, n_examples, n_features);
                     }
                 }
             }
@@ -113,37 +130,13 @@ namespace cbm {
 
             // check for early stopping
             // TODO: expose minimum number of rounds
-            if (t > 20 && (rmse > rmse0 || (rmse0 - rmse) < epsilon_early_stopping)) {
+            if (t > min_iterations_early_stopping && 
+                (rmse > rmse0 || (rmse0 - rmse) < epsilon_early_stopping)) {
                 // TODO: record diagnostics?
                 // printf("early stopping %1.4f vs %1.4f after t=%d\n", rmse, rmse0, (int)t);
                 break;
             }
-            rmse0 = rmse;
+            rmse0 = rmse; 
         }
-    }
-
-    std::vector<double> CBM::predict(
-            const char* x_data,
-            size_t x_stride0,
-            size_t x_stride1,
-            size_t n_examples,
-            size_t n_features) {
-
-        if (n_features != _f.size())
-            throw std::runtime_error("Features need to match!");
-
-        std::vector<double> y_hat(n_examples, _y_mean);
-
-        // TODO: batch parallelization
-        for (size_t i=0;i<n_examples;i++) {
-            double& y_hat_i = y_hat[i];
-            for (size_t j=0;j<n_features;j++) {
-                // TODO: simd gather?
-                uint8_t x_ij = *reinterpret_cast<const uint8_t*>(x_data + i * x_stride0 + j * x_stride1);
-                y_hat_i *= _f[j][x_ij];
-            }
-        }
-
-        return y_hat;
     }
 }

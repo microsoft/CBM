@@ -48,18 +48,24 @@ def test_nyc_bicycle():
 
     # TODO: move to CBM.py and support pandas interface?
     # CBM can only handle categorical information
-    def histedges_equalN(x, nbin):
-        npt = len(x)
-        return np.interp(np.linspace(0, npt, nbin + 1),
-                         np.arange(npt),
-                         np.sort(x))
+    # def histedges_equalN(x, nbin):
+    #     npt = len(x)
+    #     return np.interp(np.linspace(0, npt, nbin + 1),
+    #                      np.arange(npt),
+    #                      np.sort(x))
+
+    # def histedges_equalN(x, nbin):
+        # return pd.qcut(x, nbin)
 
     # some hyper-parameter che.. ehm tuning
     for bins in [2, 3, 4, 5, 6, 10]:
         x = np.stack([
             bic['Weekday'].values,
-            np.digitize(bic['HIGH_T'], histedges_equalN(bic['HIGH_T'], bins)),
-            np.digitize(bic['LOW_T'], histedges_equalN(bic['LOW_T'], bins))], axis=1)\
+            pd.qcut(bic['HIGH_T'], bins).cat.codes,
+            pd.qcut(bic['LOW_T'], bins).cat.codes],
+            # np.digitize(bic['HIGH_T'], histedges_equalN(bic['HIGH_T'], bins)),
+            # np.digitize(bic['LOW_T'], histedges_equalN(bic['LOW_T'], bins))], 
+            axis=1)\
                 .astype('uint8')
 
         x_train = x[train_idx, ]
@@ -69,9 +75,21 @@ def test_nyc_bicycle():
 
         # fit CBM model
         model = cbm.CBM()
-        model.fit(y_train, x_train)
+        model.fit(y_train, x_train, single_update_per_iteration=False)
 
         y_pred = model.predict(x_test)
+
+        # y_pred_explain[:, 0]  --> predictions
+        # y_pred_explain[:, 1:] --> explainations in-terms of multiplicative deviation from global mean
+        y_pred_explain = model.predict(x_test, explain=True)
+
+        # print("x", x_test[:3])
+        # print("y", y_pred_explain[:3])
+        # print("f", model.weights)
+
+        # validate data predictions line up
+        # print(np.all(y_pred[:, 0] == y_pred_explain[:,0]))
+
         print(f"CMB:          {mean_squared_error(y_test, y_pred, squared=False):1.4f} {timeit.timeit() - start}sec bins={bins}")
         # print(np.stack((y, y_pred))[:5,].transpose())   
 

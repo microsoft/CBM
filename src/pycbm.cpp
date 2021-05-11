@@ -11,7 +11,9 @@ namespace cbm {
         py::buffer x_max_b,
         double learning_rate_step_size,
         size_t max_iterations,
-        double epsilon_early_stopping) {
+        size_t min_iterations_early_stopping,
+        double epsilon_early_stopping,
+        bool single_update_per_iteration) {
 
         // TODO: fix error messages
         py::buffer_info y_info = y_b.request();
@@ -58,10 +60,12 @@ namespace cbm {
             x_max,
             learning_rate_step_size,
             max_iterations,
-            epsilon_early_stopping);
+            min_iterations_early_stopping,
+            epsilon_early_stopping,
+            single_update_per_iteration);
     }
 
-    std::vector<double> PyCBM::predict(py::buffer x_b) {
+    py::array_t<double> PyCBM::predict(py::buffer x_b, bool explain) {
         // TODO: fix error messages
         py::buffer_info x_info = x_b.request();
         if (x_info.format != py::format_descriptor<uint8_t>::format())
@@ -76,7 +80,21 @@ namespace cbm {
         ssize_t n_examples = x_info.shape[0];
         ssize_t n_features = x_info.shape[1];
 
-        return _cbm.predict(x_data, x_info.strides[0], x_info.strides[1], n_examples, n_features);
+        py::array_t<double, py::array::f_style> out_data(
+            {(int)n_examples, explain ? (int)(1 + n_features) : 1}
+        );
+
+        if (explain)
+            _cbm.predict<true>(x_data, x_info.strides[0], x_info.strides[1], n_examples, n_features, out_data.mutable_data());
+        else
+            _cbm.predict<false>(x_data, x_info.strides[0], x_info.strides[1], n_examples, n_features, out_data.mutable_data());
+
+        return out_data;
+    }
+
+
+    std::vector<std::vector<double>>& PyCBM::get_weights() {
+        return _cbm.get_weights();
     }
 };
 
@@ -85,5 +103,6 @@ PYBIND11_MODULE(cbm_cpp, m) {
 
     estimator.def(py::init([]() { return new cbm::PyCBM(); }))
              .def("fit", &cbm::PyCBM::fit)
-             .def("predict", &cbm::PyCBM::predict);
+             .def("predict", &cbm::PyCBM::predict)
+             .def_property_readonly("weights", &cbm::PyCBM::get_weights);
 }
