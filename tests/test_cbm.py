@@ -107,6 +107,8 @@ def test_nyc_bicycle():
     enc.fit(x)
     x = enc.transform(x)
 
+    x = np.hstack([x.todense(), bic[['HIGH_T', 'LOW_T', 'PRECIP']].values])
+
     clf = linear_model.PoissonRegressor()
     clf.fit(x[train_idx, ], y_train)
 
@@ -118,7 +120,7 @@ def test_nyc_bicycle():
 
     #### LightGBM
     # train_data = lgb.Dataset(x, label=y, categorical_feature=[0, 1])
-    x = bic[['Weekday', 'HIGH_T', 'LOW_T']].values
+    x = bic[['Weekday', 'HIGH_T', 'LOW_T', 'PRECIP']].values
 
     train_data = lgb.Dataset(x[train_idx, ], label=y_train, categorical_feature=[0])
     model = lgb.train({
