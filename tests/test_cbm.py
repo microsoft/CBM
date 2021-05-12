@@ -57,14 +57,15 @@ def test_nyc_bicycle():
     # def histedges_equalN(x, nbin):
         # return pd.qcut(x, nbin)
 
+    print()
     # some hyper-parameter che.. ehm tuning
-    for bins in [2, 3, 4, 5, 6, 10]:
+    for bins in [2, 3, 4, 5, 6, 7, 8, 9, 10]:
         x = np.stack([
             bic['Weekday'].values,
             pd.qcut(bic['HIGH_T'], bins).cat.codes,
-            pd.qcut(bic['LOW_T'], bins).cat.codes],
-            # np.digitize(bic['HIGH_T'], histedges_equalN(bic['HIGH_T'], bins)),
-            # np.digitize(bic['LOW_T'], histedges_equalN(bic['LOW_T'], bins))], 
+            pd.qcut(bic['LOW_T'], bins).cat.codes,
+            pd.qcut(bic['PRECIP'], 5, duplicates='drop').cat.codes
+        ],
             axis=1)\
                 .astype('uint8')
 
@@ -78,6 +79,7 @@ def test_nyc_bicycle():
         model.fit(y_train, x_train, single_update_per_iteration=False)
 
         y_pred = model.predict(x_test)
+        y_pred_train = model.predict(x_train)
 
         # y_pred_explain[:, 0]  --> predictions
         # y_pred_explain[:, 1:] --> explainations in-terms of multiplicative deviation from global mean
@@ -90,7 +92,8 @@ def test_nyc_bicycle():
         # validate data predictions line up
         # print(np.all(y_pred[:, 0] == y_pred_explain[:,0]))
 
-        print(f"CMB:          {mean_squared_error(y_test, y_pred, squared=False):1.4f} {timeit.timeit() - start}sec bins={bins}")
+        print(f"CMB:          {mean_squared_error(y_test, y_pred, squared=False):1.4f} (train {mean_squared_error(y_train, y_pred_train, squared=False):1.4f}) bins={bins} {timeit.timeit() - start}sec")
+        # print("weights", model.weights)
         # print(np.stack((y, y_pred))[:5,].transpose())   
 
     #### Poisson Regression

@@ -94,7 +94,7 @@ namespace cbm {
             // compute g
             // TODO: parallelize
             for (size_t j=0;j<n_features;j++) {
-                for (size_t k=0;k<x_max[j];k++) {
+                for (size_t k=0;k<=x_max[j];k++) {
 
                     // TODO: check if a bin is empty. might be better to remap/exclude the bins?
                     if (y_sum[j][k]) {
