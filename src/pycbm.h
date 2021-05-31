@@ -15,6 +15,9 @@ namespace cbm {
         CBM _cbm;
 
     public:
+        PyCBM();
+        PyCBM(const std::vector<std::vector<double>>& f, double y_mean);
+
         void fit(
             py::buffer y_b,
             py::buffer x_b,
@@ -28,6 +31,8 @@ namespace cbm {
 
         py::array_t<double> predict(py::buffer x_b, bool explain);
 
-        std::vector<std::vector<double>>& get_weights();
+        const std::vector<std::vector<double>>& get_weights() const;
+
+        float get_y_mean() const;
     };
 }

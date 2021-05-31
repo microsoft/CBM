@@ -33,7 +33,7 @@ setup(
         "Topic :: Scientific/Engineering :: Mathematics",
     ],
     setup_requires=["pytest-runner"],
-    install_requires=["pybind11>=2.2", "numpy"],
+    install_requires=["pybind11>=2.2", "numpy", "scikit-learn"],
     tests_require=["pytest"],
     packages=["cbm"],
     ext_modules=[

@@ -75,8 +75,8 @@ def test_nyc_bicycle():
         start = timeit.timeit()
 
         # fit CBM model
-        model = cbm.CBM()
-        model.fit(y_train, x_train, single_update_per_iteration=False)
+        model = cbm.CBM(single_update_per_iteration=False)
+        model.fit(x_train, y_train)
 
         y_pred = model.predict(x_test)
         y_pred_train = model.predict(x_train)

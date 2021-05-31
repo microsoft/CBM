@@ -16,6 +16,9 @@ namespace cbm {
             size_t n_examples,
             size_t n_features);
     public:
+        CBM();
+        CBM(const std::vector<std::vector<double>>& f, double y_mean);
+
         void fit(
             const uint32_t* y,
             const char* x_data,
@@ -63,6 +66,7 @@ namespace cbm {
             }
         }
 
-        std::vector<std::vector<double>>& get_weights();
+        const std::vector<std::vector<double>>& get_weights() const;
+        float get_y_mean() const;
     };
 }

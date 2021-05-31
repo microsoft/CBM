@@ -3,6 +3,11 @@
 namespace py = pybind11;
 
 namespace cbm {
+    PyCBM::PyCBM() {
+    }
+
+    PyCBM::PyCBM(const std::vector<std::vector<double>>& f, double y_mean) : _cbm(f, y_mean) {
+    }
 
     void PyCBM::fit(
         py::buffer y_b,
@@ -93,8 +98,12 @@ namespace cbm {
     }
 
 
-    std::vector<std::vector<double>>& PyCBM::get_weights() {
+    const std::vector<std::vector<double>>& PyCBM::get_weights() const {
         return _cbm.get_weights();
+    }
+
+    float PyCBM::get_y_mean() const {
+        return _cbm.get_y_mean();
     }
 };
 
@@ -104,5 +113,21 @@ PYBIND11_MODULE(cbm_cpp, m) {
     estimator.def(py::init([]() { return new cbm::PyCBM(); }))
              .def("fit", &cbm::PyCBM::fit)
              .def("predict", &cbm::PyCBM::predict)
-             .def_property_readonly("weights", &cbm::PyCBM::get_weights);
+             .def_property_readonly("weights", &cbm::PyCBM::get_weights)
+             .def(py::pickle(
+                [](const cbm::PyCBM &p) { // __getstate__
+                    /* Return a tuple that fully encodes the state of the object */
+                    return py::make_tuple(p.get_weights(), p.get_y_mean());
+                },
+                [](py::tuple t) { // __setstate__
+                    if (t.size() != 2)
+                        throw std::runtime_error("Invalid state!");
+
+                    /* Create a new C++ instance */
+                    cbm::PyCBM p(t[0].cast<std::vector<std::vector<double>>>(),
+                            t[1].cast<float>());
+
+                    return p;
+                }
+             ));
 }

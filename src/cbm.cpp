@@ -5,6 +5,14 @@
 #include <cmath>
 
 namespace cbm {
+    CBM::CBM() {
+    }
+
+    CBM::CBM(const std::vector<std::vector<double>>& f, double y_mean) {
+        _f = f;
+        _y_mean = y_mean;
+    }
+
     void CBM::update_y_hat_sum(
         std::vector<std::vector<uint64_t>>& y_hat_sum,
         std::vector<std::vector<uint8_t>>& x,
@@ -28,8 +36,12 @@ namespace cbm {
         }
     }
 
-    std::vector<std::vector<double>>& CBM::get_weights() {
+    const std::vector<std::vector<double>>& CBM::get_weights() const {
         return _f;
+    }
+
+    float CBM::get_y_mean() const {
+        return _y_mean;
     }
 
     void CBM::fit(
