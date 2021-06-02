@@ -34,7 +34,7 @@ setup(
     ],
     setup_requires=["pytest-runner"],
     install_requires=["pybind11>=2.2", "numpy", "scikit-learn"],
-    tests_require=["pytest"],
+    tests_require=["pytest", "lightgbm", "interpret"],
     packages=["cbm"],
     ext_modules=[
         Extension(
