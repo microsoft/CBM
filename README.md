@@ -1,5 +1,8 @@
 # Cyclic Boosting Machines
 
+[![PyPI version](https://badge.fury.io/py/pysarplus.svg)](https://badge.fury.io/py/cyclicbm)
+[![Academic Paper](https://img.shields.io/badge/academic-paper-7fdcf7)](https://arxiv.org/abs/2002.03425)
+
 This is an efficient and Scikit-learn compatible implementation of the machine learning algorithm [Cyclic Boosting -- an explainable supervised machine learning algorithm](https://arxiv.org/abs/2002.03425), specifically for predicting count-data, such as sales and demand.
 
 ## Usage
