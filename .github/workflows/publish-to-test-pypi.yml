@@ -5,11 +5,10 @@ on: push
 jobs:
   build-n-publish:
     name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
-    # runs-on: ubuntu-18.04
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-18.04, macos-latest, windows-latest]
+        os: [ubuntu-18.04] #, macos-latest, windows-latest]
     steps:
     - uses: actions/checkout@master
     - name: Set up Python 3.8
@@ -22,11 +21,11 @@ jobs:
 
     - name: Build a source tarball (Linux / Mac)
       if: matrix.os != 'windows-latest'
-      run: python -m build --sdist --wheel --outdir dist/ .        
+      run: python -m build --sdist --outdir dist/ .        
 
     - name: Build a binary wheel and a source tarball (Windows)
       if: matrix.os == 'windows-latest'
-      run: python -m build --wheel --outdir dist/ .        
+      run: python -m build --sdist --wheel --outdir dist/ .        
 
     - name: Publish distribution 📦 to Test PyPI
       uses: pypa/gh-action-pypi-publish@master
