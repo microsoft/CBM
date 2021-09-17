@@ -1,33 +1,33 @@
-name: Generate Codecov
+name: Build
 on: [push]
 jobs:
-  run:
+  Codecov:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+        python: [3.8] # [3.6, 3.7, 3.8]
     env:
       OS: ${{ matrix.os }}
-      PYTHON: '3.8'
     steps:
     - uses: actions/checkout@master
     - name: Setup Python
       uses: actions/setup-python@master
       with:
-        python-version: 3.8
+        python-version: ${{ matrix.python }}
 
     - name: Install dependencies
-      run: python -m pip install pybind11 numpy pandas scikit-learn lightgbm interpret
+      run: python -m pip install pytest pytest-cov pybind11 numpy pandas scikit-learn lightgbm interpret
 
     - name: Install dependency for lightgbm
       if: matrix.os == 'macos-latest'
       run: brew install libomp
 
+    - name: Install package
+      run: python -m pip install -e .
+
     - name: Generate coverage report
-      run: |
-        python -m pip install pytest pytest-cov
-        python -m pip install -e .
-        pytest --cov=./ --cov-report=xml tests/
+      run: pytest --cov=./ --cov-report=xml tests/
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v2
       with:
