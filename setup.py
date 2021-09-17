@@ -13,10 +13,17 @@ class get_pybind_include(object):
 
         return pybind11.get_include(self.user)
 
+def get_extra_compile_args():
+    cflags = sysconfig.get_config_var("CFLAGS")
+    if cflags is None:
+        cflags = ""
+
+    return cflags.split() \
+            + ["-std=c++11", "-Wall", "-Wextra", "-march=native", "-msse2", "-ffast-math", "-mfpmath=sse"]
 
 setup(
     name="cyclicbm",
-    version="0.0.1",
+    version="0.0.2",
     description="Cyclic Boosting Machines",
     url="https://github.com/Microsoft/CBM",
     author="Markus Cozowicz",
@@ -41,8 +48,7 @@ setup(
             "cbm_cpp",
             ["src/pycbm.cpp", "src/cbm.cpp"],
             include_dirs=[get_pybind_include(), get_pybind_include(user=True)],
-            extra_compile_args=sysconfig.get_config_var("CFLAGS").split()
-            + ["-std=c++11", "-Wall", "-Wextra", "-march=native", "-msse2", "-ffast-math", "-mfpmath=sse"],
+            extra_compile_args=get_extra_compile_args(),
             libraries=["stdc++"],
             language="c++11",
         )
