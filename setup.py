@@ -2,7 +2,7 @@ import sysconfig
 
 from setuptools import setup
 from setuptools.extension import Extension
-
+import platform
 
 class get_pybind_include(object):
     def __init__(self, user=False):
@@ -14,6 +14,9 @@ class get_pybind_include(object):
         return pybind11.get_include(self.user)
 
 def get_extra_compile_args():
+    if platform.system() == "Windows":
+        return ""
+
     cflags = sysconfig.get_config_var("CFLAGS")
     if cflags is None:
         cflags = ""
@@ -23,7 +26,7 @@ def get_extra_compile_args():
 
 setup(
     name="cyclicbm",
-    version="0.0.2",
+    version="0.0.3",
     description="Cyclic Boosting Machines",
     url="https://github.com/Microsoft/CBM",
     author="Markus Cozowicz",
