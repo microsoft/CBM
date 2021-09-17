@@ -15,7 +15,7 @@ class get_pybind_include(object):
 
 
 setup(
-    name="cbm",
+    name="cyclicbm",
     version="0.0.1",
     description="Cyclic Boosting Machines",
     url="https://github.com/Microsoft/CBM",
