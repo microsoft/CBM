@@ -20,7 +20,8 @@ jobs:
         pip install pytest
         pip install pytest-cov
         pip install pybind11 numpy pandas scikit-learn lightgbm interpret
-        pytest --cov=./ --cov-report=xml
+        python -m pip install . --user
+        pytest --cov=./ --cov-report=xml tests/
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v2
       with:
