@@ -18,7 +18,7 @@ jobs:
         python -m pip install build --user
 
     - name: Install dependencies
-      run:  pip install pybind11 numpy pybind11
+      run: pip install pybind11 numpy pandas scikit-learn lightgbm interpret
 
     - name: Build a binary wheel and a source tarball
       run: >-
