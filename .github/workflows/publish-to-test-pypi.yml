@@ -6,6 +6,7 @@ jobs:
   build-n-publish:
     name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
     runs-on: ${{ matrix.os }}
+    continue-on-error: true
     strategy:
       matrix:
         os: [ubuntu-18.04, windows-latest]

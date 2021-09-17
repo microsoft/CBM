@@ -24,10 +24,22 @@ def get_extra_compile_args():
     return cflags.split() \
             + ["-std=c++11", "-Wall", "-Wextra", "-march=native", "-msse2", "-ffast-math", "-mfpmath=sse"]
 
+def get_libraries():
+    if platform.system() == "Windows":
+        return []
+
+    return ["stdc++"]
+
+from pathlib import Path
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
+
 setup(
     name="cyclicbm",
-    version="0.0.3",
+    version="0.0.5",
     description="Cyclic Boosting Machines",
+    long_description=long_description,
+    long_description_content_type='text/markdown'    
     url="https://github.com/Microsoft/CBM",
     author="Markus Cozowicz",
     author_email="marcozo@microsoft.com",
@@ -52,7 +64,7 @@ setup(
             ["src/pycbm.cpp", "src/cbm.cpp"],
             include_dirs=[get_pybind_include(), get_pybind_include(user=True)],
             extra_compile_args=get_extra_compile_args(),
-            libraries=["stdc++"],
+            libraries=get_libraries(),
             language="c++11",
         )
     ],
