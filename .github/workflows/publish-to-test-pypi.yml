@@ -3,9 +3,31 @@ name: Publish Python 🐍 distributions 📦 to PyPI and TestPyPI
 on: push
 
 jobs:
-  build-n-publish:
-    name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
-    runs-on: ubuntu-18.04
+  # build-windows:
+  #   name: Build on Windows
+  #   runs-on: windows-latest
+  #   steps:
+  #   - uses: actions/checkout@master
+  #   - name: Set up Python 3.8
+  #     uses: actions/setup-python@v1
+  #     with:
+  #       python-version: 3.8
+    
+  #   - name: Install pypa/build
+  #     run: python -m pip install build --user
+    
+  #   - name: Build a binary wheel and a source tarball (Windows)
+  #     run: python -m build --sdist --wheel --outdir dist/ .        
+
+  #   - name: Store the binary wheel
+  #     uses: actions/upload-artifact@v2
+  #     with:
+  #       name: python-package-distributions
+  #       path: dist
+
+  build-linux:
+    name: Build on Linux
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@master
     - name: Set up Python 3.8
@@ -14,20 +36,29 @@ jobs:
         python-version: 3.8
 
     - name: Install pypa/build
-      run: >-
-        python -m
-        pip install
-        build
-        --user
+      run: python -m pip install build --user
 
-    - name: Build a binary wheel and a source tarball
-      run: >-
-        python -m
-        build
-        --sdist
-        --wheel
-        --outdir dist/
-        .        
+    - name: Build a source tarball
+      run: python -m build --sdist --outdir dist/ .        
+
+    - name: Store the binary wheel
+      uses: actions/upload-artifact@v2
+      with:
+        name: python-package-distributions
+        path: dist
+
+  publish:
+    name: Publish to PyPI and TestPyPI
+    runs-on: ubuntu-20.04
+    needs:
+      # - build-windows
+      - build-linux
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v2
+      with:
+        name: python-package-distributions
+        path: dist/
 
     - name: Publish distribution 📦 to Test PyPI
       uses: pypa/gh-action-pypi-publish@master

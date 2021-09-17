@@ -20,24 +20,25 @@ namespace cbm {
         double epsilon_early_stopping,
         bool single_update_per_iteration) {
 
-        // TODO: fix error messages
         py::buffer_info y_info = y_b.request();
+
+        // this is broken on windows
         if (y_info.format != py::format_descriptor<uint32_t>::format())
-            throw std::runtime_error("Incompatible format: expected a y array!");
+            throw std::runtime_error("Incompatible format: expected a uint32 array for y!");
 
         if (y_info.ndim != 1)
-            throw std::runtime_error("Incompatible buffer dimension!");
+            throw std::runtime_error("y must be 1-dimensional!");
 
         py::buffer_info x_info = x_b.request();
         if (x_info.format != py::format_descriptor<uint8_t>::format())
-            throw std::runtime_error("Incompatible format: expected a x array!");
+            throw std::runtime_error("Incompatible format: expected a uint8 array x!");
 
         if (x_info.ndim != 2)
             throw std::runtime_error("Incompatible buffer dimension!");
 
         py::buffer_info x_max_info = x_max_b.request();
         if (x_max_info.format != py::format_descriptor<uint8_t>::format())
-            throw std::runtime_error("Incompatible format: expected a x array!");
+            throw std::runtime_error("Incompatible format: expected a uint8 array for x_max!");
 
         if (x_max_info.ndim != 1)
             throw std::runtime_error("Incompatible buffer dimension!");
