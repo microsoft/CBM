@@ -1,5 +1,7 @@
 #include "pycbm.h"
 
+#include <sstream>
+
 namespace py = pybind11;
 
 namespace cbm {
@@ -20,21 +22,38 @@ namespace cbm {
         double epsilon_early_stopping,
         bool single_update_per_iteration) {
 
+        // can't check compare just the format as linux returns I, windows returns L when using astype('uint32')
+        // https://docs.python.org/3/library/struct.html#format-characters
         py::buffer_info y_info = y_b.request();
-
-        // this is broken on windows
-        if (y_info.format != py::format_descriptor<uint32_t>::format())
-            throw std::runtime_error("Incompatible format: expected a uint32 array for y!");
+        if (!(y_info.itemsize == 4 && (y_info.format == "I" ||
+                                       y_info.format == "H" ||
+                                       y_info.format == "N" ||
+                                       y_info.format == "B" ||
+                                       y_info.format == "L"))) {
+            std::ostringstream oss;
+            oss << "y must be of type unsigned integer/long with 4 bytes! Must use y.astype('uint32'). "
+                << "Format: " << y_info.format << " Size: " << y_info.itemsize;
+            throw std::runtime_error("");
+        }
 
         if (y_info.ndim != 1)
             throw std::runtime_error("y must be 1-dimensional!");
 
         py::buffer_info x_info = x_b.request();
-        if (x_info.format != py::format_descriptor<uint8_t>::format())
-            throw std::runtime_error("Incompatible format: expected a uint8 array x!");
+        if (!(x_info.itemsize == 1 && (x_info.format == "I" ||
+                                       x_info.format == "H" ||
+                                       x_info.format == "N" ||
+                                       x_info.format == "B" ||
+                                       x_info.format == "L"))) {
+            std::ostringstream oss;
+            oss << "x must be of type unsigned integer/long with 1 bytes! Must use x.astype('uint8'). "
+                << "Format: " << x_info.format << " Size: " << x_info.itemsize;
+
+            throw std::runtime_error(oss.str().c_str());
+        }
 
         if (x_info.ndim != 2)
-            throw std::runtime_error("Incompatible buffer dimension!");
+            throw std::runtime_error("x must be 2-dimensional!");
 
         py::buffer_info x_max_info = x_max_b.request();
         if (x_max_info.format != py::format_descriptor<uint8_t>::format())
