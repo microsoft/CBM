@@ -47,16 +47,16 @@ setup(
     classifiers=[
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering :: Mathematics",
     ],
     setup_requires=["pytest-runner"],
     install_requires=["pybind11>=2.2", "numpy", "scikit-learn"],
-    tests_require=["pytest", "lightgbm", "interpret"],
+    tests_require=["pytest", "lightgbm"], #, "interpret"],
     packages=["cbm"],
     ext_modules=[
         Extension(

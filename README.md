@@ -1,6 +1,7 @@
 # Cyclic Boosting Machines
 
 ![Build](https://github.com/Microsoft/cbm/actions/workflows/build.yml/badge.svg)
+![Python](https://img.shields.io/pypi/pyversions/cyclicbm.svg)
 [![codecov](https://codecov.io/gh/microsoft/CBM/branch/main/graph/badge.svg?token=VRppFx2o8v)](https://codecov.io/gh/microsoft/CBM)
 [![PyPI version](https://badge.fury.io/py/cyclicbm.svg)](https://badge.fury.io/py/cyclicbm)
 [![Academic Paper](https://img.shields.io/badge/academic-paper-7fdcf7)](https://arxiv.org/abs/2002.03425)
