@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn import linear_model
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import OneHotEncoder
-from interpret.glassbox import ExplainableBoostingRegressor
+# from interpret.glassbox import ExplainableBoostingRegressor
 
 import lightgbm as lgb
 import timeit
@@ -137,10 +137,10 @@ def test_nyc_bicycle():
 
 
     #### EBM
-    start = timeit.timeit()
+    # start = timeit.timeit()
 
-    ebm = ExplainableBoostingRegressor(random_state=23, max_bins=8) #, outer_bags=25, inner_bags=25)
-    ebm.fit(x[train_idx], y_train)
+    # ebm = ExplainableBoostingRegressor(random_state=23, max_bins=8) #, outer_bags=25, inner_bags=25)
+    # ebm.fit(x[train_idx], y_train)
 
-    y_pred = ebm.predict(x[test_idx,])
-    print(f"EBM:          {mean_squared_error(y_test, y_pred, squared=False):1.4f} {timeit.timeit() - start}sec")
+    # y_pred = ebm.predict(x[test_idx,])
+    # print(f"EBM:          {mean_squared_error(y_test, y_pred, squared=False):1.4f} {timeit.timeit() - start}sec")
