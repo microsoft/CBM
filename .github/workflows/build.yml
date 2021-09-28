@@ -60,13 +60,6 @@ jobs:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
-      # credential scanning
-      - name: Perform Scan
-        uses: ShiftLeftSecurity/scan-action@master
-        continue-on-error: true
-        with:
-          type: "credscan,python"
 
       - name: CodeQL Init
         uses: github/codeql-action/init@v1
