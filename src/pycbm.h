@@ -1,3 +1,6 @@
+/* Copyright (c) Microsoft Corporation.
+   Licensed under the MIT License. */
+
 #pragma once
 
 #include <pybind11/pybind11.h>

@@ -41,3 +41,42 @@ jobs:
         name: codecov-umbrella
         path_to_write_report: ./coverage/codecov_report.txt
         verbose: true
+  
+  quality-control:
+    name: Quality Control
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          # Full git history is needed to get a proper list of changed files within `super-linter`
+          fetch-depth: 0
+
+      # linting
+      - name: Lint Code Base
+        uses: github/super-linter@v4
+        continue-on-error: true
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: master
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+      # credential scanning
+      - name: Perform Scan
+        uses: ShiftLeftSecurity/scan-action@master
+        continue-on-error: true
+        with:
+          type: "credscan,python"
+
+      - name: CodeQL Init
+        uses: github/codeql-action/init@v1
+        with:
+          languages: python
+
+      # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
+      # If this step fails, then you should remove it and run the build manually (see below)
+      - name: CodeQL Autobuild
+        uses: github/codeql-action/autobuild@v1
+
+      - name: CodeQL Analysis
+        uses: github/codeql-action/analyze@v1
