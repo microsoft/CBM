@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 import cbm_cpp
 import numpy as np
 
@@ -58,5 +61,5 @@ class CBM(BaseEstimator):
         return self._cpp.predict(X.astype('uint8'), explain)
 
     @property
-    def weights_(self):
-        return self.cpp.weights
+    def weights(self):
+        return self._cpp.weights
