@@ -60,6 +60,18 @@ class CBM(BaseEstimator):
 
         return self._cpp.predict(X.astype('uint8'), explain)
 
+    def update(self, weights: list, y_mean: float):
+        self._cpp = cbm_cpp.PyCBM()
+        
+        self._cpp.weights = weights
+        self._cpp.y_mean = y_mean
+
+        self.is_fitted_ = True
+
     @property
     def weights(self):
         return self._cpp.weights
+
+    @property
+    def y_mean(self):
+        return self._cpp.y_mean

@@ -36,6 +36,10 @@ namespace cbm {
 
         const std::vector<std::vector<double>>& get_weights() const;
 
+        void set_weights(std::vector<std::vector<double>>&);
+
         float get_y_mean() const;
+
+        void set_y_mean(float mean);
     };
 }

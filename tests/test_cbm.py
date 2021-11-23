@@ -97,8 +97,18 @@ def test_nyc_bicycle():
         # print(np.all(y_pred[:, 0] == y_pred_explain[:,0]))
 
         print(f"CMB:          {mean_squared_error(y_test, y_pred, squared=False):1.4f} (train {mean_squared_error(y_train, y_pred_train, squared=False):1.4f}) bins={bins} {timeit.timeit() - start}sec")
-        # print("weights", model.weights)
+        print("weights", model.weights)
+        print(f"y_mean: {model.y_mean}")
         # print(np.stack((y, y_pred))[:5,].transpose())   
+
+        model2  = cbm.CBM()
+        model2.update(model.weights, model.y_mean)
+
+        y_pred_train2 = model2.predict(x_train)
+
+        # print(y_pred_train[:10])
+        # print(y_pred_train2[:10])
+        print('Must match: ', np.allclose(y_pred_train, y_pred_train2))
 
     #### Poisson Regression
 

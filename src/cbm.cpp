@@ -43,8 +43,16 @@ namespace cbm {
         return _f;
     }
 
+    void CBM::set_weights(std::vector<std::vector<double>>& w) {
+        _f = w;
+    }
+
     float CBM::get_y_mean() const {
         return _y_mean;
+    }
+
+    void CBM::set_y_mean(float y_mean) {
+        _y_mean = y_mean;
     }
 
     void CBM::fit(

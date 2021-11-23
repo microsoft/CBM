@@ -125,8 +125,16 @@ namespace cbm {
         return _cbm.get_weights();
     }
 
+    void PyCBM::set_weights(std::vector<std::vector<double>>& w) {
+        _cbm.set_weights(w);
+    }
+
     float PyCBM::get_y_mean() const {
         return _cbm.get_y_mean();
+    }
+
+    void PyCBM::set_y_mean(float y_mean) {
+        _cbm.set_y_mean(y_mean);
     }
 };
 
@@ -136,7 +144,8 @@ PYBIND11_MODULE(cbm_cpp, m) {
     estimator.def(py::init([]() { return new cbm::PyCBM(); }))
              .def("fit", &cbm::PyCBM::fit)
              .def("predict", &cbm::PyCBM::predict)
-             .def_property_readonly("weights", &cbm::PyCBM::get_weights)
+             .def_property("y_mean", &cbm::PyCBM::get_y_mean, &cbm::PyCBM::set_y_mean)
+             .def_property("weights", &cbm::PyCBM::get_weights, &cbm::PyCBM::set_weights)
              .def(py::pickle(
                 [](const cbm::PyCBM &p) { // __getstate__
                     /* Return a tuple that fully encodes the state of the object */
