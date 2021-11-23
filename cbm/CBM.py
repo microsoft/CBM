@@ -6,6 +6,9 @@ import numpy as np
 
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
+from sklearn.base import BaseEstimator
+from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
+
 
 class CBM(BaseEstimator):
     cpp: cbm_cpp.PyCBM
@@ -15,7 +18,8 @@ class CBM(BaseEstimator):
         max_iterations:int = 100,
         min_iterations_early_stopping:int = 20,
         epsilon_early_stopping:float = 1e-3,
-        single_update_per_iteration:bool = True) -> None:
+        single_update_per_iteration:bool = True,
+        ) -> None:
 
         self.learning_rate_step_size = learning_rate_step_size
         self.max_iterations = max_iterations
@@ -26,7 +30,7 @@ class CBM(BaseEstimator):
     def fit(self,
             X: np.ndarray,
             y: np.ndarray
-            ) -> 'CBM':
+            ) -> "CBM":
 
         X, y = check_X_y(X, y, y_numeric=True)
 
@@ -40,15 +44,16 @@ class CBM(BaseEstimator):
 
         self._cpp = cbm_cpp.PyCBM()
         self._cpp.fit(
-            y.astype('uint32'), 
-            X.astype('uint8'),
+            y.astype("uint32"), 
+            X.astype("uint8"),
             y_mean, 
-            x_max.astype('uint8'),
+            x_max.astype("uint8"),
             self.learning_rate_step_size,
             self.max_iterations,
             self.min_iterations_early_stopping,
             self.epsilon_early_stopping,
-            self.single_update_per_iteration)
+            self.single_update_per_iteration,
+            )
 
         self.is_fitted_ = True
 
@@ -56,10 +61,22 @@ class CBM(BaseEstimator):
 
     def predict(self, X: np.ndarray, explain: bool = False):
         X = check_array(X)
-        check_is_fitted(self, 'is_fitted_')
+        check_is_fitted(self, "is_fitted_")
 
-        return self._cpp.predict(X.astype('uint8'), explain)
+        return self._cpp.predict(X.astype("uint8"), explain)
+
+    def update(self, weights: list, y_mean: float):
+        self._cpp = cbm_cpp.PyCBM()
+
+        self._cpp.weights = weights
+        self._cpp.y_mean = y_mean
+
+        self.is_fitted_ = True
 
     @property
     def weights(self):
         return self._cpp.weights
+
+    @property
+    def y_mean(self):
+        return self._cpp.y_mean
