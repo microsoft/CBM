@@ -61,7 +61,7 @@ setup(
     ext_modules=[
         Extension(
             "cbm_cpp",
-            ["src/pycbm.cpp", "src/cbm.cpp"],
+            ["src/pycbm.cpp", "src/cbm.cpp", "src/pycbm.h", "src/cbm.h"],
             include_dirs=[get_pybind_include(), get_pybind_include(user=True)],
             extra_compile_args=get_extra_compile_args(),
             libraries=get_libraries(),
