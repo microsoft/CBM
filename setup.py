@@ -36,7 +36,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="cyclicbm",
-    version="0.0.5",
+    version="0.0.6",
     description="Cyclic Boosting Machines",
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -58,10 +58,11 @@ setup(
     install_requires=["pybind11>=2.2", "numpy", "scikit-learn"],
     tests_require=["pytest", "lightgbm"], #, "interpret"],
     packages=["cbm"],
+    package_data={ "cbm": ["src/pycbm.h", "src/cbm.h"] },
     ext_modules=[
         Extension(
             "cbm_cpp",
-            ["src/pycbm.cpp", "src/cbm.cpp", "src/pycbm.h", "src/cbm.h"],
+            ["src/pycbm.cpp", "src/cbm.cpp" ],
             include_dirs=[get_pybind_include(), get_pybind_include(user=True)],
             extra_compile_args=get_extra_compile_args(),
             libraries=get_libraries(),
