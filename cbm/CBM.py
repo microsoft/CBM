@@ -132,16 +132,25 @@ class CBM(BaseEstimator):
 
         # determine max bin per categorical
         x_max = X.max(axis=0)
+        x_max_max = x_max.max()
 
-        if np.any(x_max > 255):
+        if x_max_max <= 255:
+            self._x_type = "uint8"
+        elif x_max_max <= 65535:
+            self._x_type = "uint16"
+        elif x_max_max <= 4294967295:  
+            self._x_type = "uint32"
+        else: 
             raise ValueError("Maximum of 255 categories per features")
+
+        X = X.astype(self._x_type)
 
         self._cpp = cbm_cpp.PyCBM()
         self._cpp.fit(
             y.astype("uint32"), 
-            X.astype("uint8"),
+            X,
             y_mean, 
-            x_max.astype("uint8"),
+            x_max.astype("uint32"),
             self.learning_rate_step_size,
             self.max_iterations,
             self.min_iterations_early_stopping,
@@ -194,10 +203,20 @@ class CBM(BaseEstimator):
         X = check_array(X)
         check_is_fitted(self, "is_fitted_")
 
-        return self._cpp.predict(X.astype("uint8"), explain)
+        return self._cpp.predict(X.astype(self._x_type), explain)
 
     def update(self, weights: list, y_mean: float):
         self._cpp = cbm_cpp.PyCBM()
+
+        x_max_max = max(map(len, weights))
+        if x_max_max <= 255:
+            self._x_type = "uint8"
+        elif x_max_max <= 65535:
+            self._x_type = "uint16"
+        elif x_max_max <= 4294967295:  
+            self._x_type = "uint32"
+        else: 
+            raise ValueError("Maximum of 255 categories per features")
 
         self._cpp.weights = weights
         self._cpp.y_mean = y_mean
