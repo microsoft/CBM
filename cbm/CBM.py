@@ -22,7 +22,7 @@ class CBM(BaseEstimator):
         min_iterations_early_stopping:int = 20,
         epsilon_early_stopping:float = 1e-3,
         single_update_per_iteration:bool = True,
-        date_features: List[str] = ['day', 'month'],
+        date_features: Union[str, List[str]] = 'day,month',
         binning: Union[int, lambda x: int] = 10,
         ) -> None:
         """Initialize the CBM model.
@@ -43,11 +43,18 @@ class CBM(BaseEstimator):
         self.min_iterations_early_stopping = min_iterations_early_stopping
         self.epsilon_early_stopping = epsilon_early_stopping
         self.single_update_per_iteration = single_update_per_iteration
+
+        # lets make sure it's serializable
+        if isinstance(date_features, list):
+            date_features = ",".join(date_features)
         self.date_features = date_features
         self.binning = binning
 
+    def get_date_features(self) -> List[str]:
+        return self.date_features.split(",")
+
     def fit(self,
-            X: "Union(np.ndarray, pd.DataFrame)",
+            X: Union[np.ndarray, pd.DataFrame],
             y: np.ndarray
             ) -> "CBM":
 
@@ -64,7 +71,7 @@ class CBM(BaseEstimator):
                 col_dtype = X[col].dtype
 
                 if pd.api.types.is_datetime64_any_dtype(col_dtype):
-                    for expansion in self.date_features:
+                    for expansion in self.get_date_features():
                         import calendar
 
                         if expansion == 'day':
@@ -155,7 +162,7 @@ class CBM(BaseEstimator):
                 col_dtype = X[col].dtype
 
                 if pd.api.types.is_datetime64_any_dtype(col_dtype):
-                    for expansion in self.date_features:
+                    for expansion in self.get_date_features():
                         if expansion == 'day':
                             X_numeric.append(X[col].dt.dayofweek.values)
                             offset += 1

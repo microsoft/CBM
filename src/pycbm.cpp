@@ -165,6 +165,7 @@ PYBIND11_MODULE(cbm_cpp, m)
         .def_property_readonly("iterations", &cbm::PyCBM::get_iterations)
         .def(py::pickle(
             [](const cbm::PyCBM &p) { // __getstate__
+                /* TODO: this does not include the feature pre-processing */
                 /* Return a tuple that fully encodes the state of the object */
                 return py::make_tuple(p.get_weights(), p.get_y_mean());
             },
