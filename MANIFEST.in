@@ -1,0 +1,4 @@
+include README.md
+include setup.py
+recursive-include cbm *.py
+recursive-include src *.c *.h

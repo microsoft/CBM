@@ -22,7 +22,7 @@ def get_extra_compile_args():
         cflags = ""
 
     return cflags.split() \
-            + ["-std=c++11", "-Wall", "-Wextra", "-march=native", "-msse2", "-ffast-math", "-mfpmath=sse"]
+            + ["-std=c++11", "-Wall", "-Wextra", "-march=native", "-msse2", "-ffast-math", "-mfpmath=sse"] #, "-fopenmp"]
 
 def get_libraries():
     if platform.system() == "Windows":
@@ -36,7 +36,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="cyclicbm",
-    version="0.0.6",
+    version="0.0.7",
     description="Cyclic Boosting Machines",
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -55,19 +55,23 @@ setup(
         "Topic :: Scientific/Engineering :: Mathematics",
     ],
     setup_requires=["pytest-runner"],
-    install_requires=["pybind11>=2.2", "numpy", "scikit-learn"],
+    install_requires=["pybind11>=2.2", "numpy", "scikit-learn", "pandas"],
     tests_require=["pytest", "lightgbm"], #, "interpret"],
+    extras_require={
+        'interactive': ['matplotlib>=2.2.0'],
+    },
     packages=["cbm"],
-    package_data={ "cbm": ["src/pycbm.h", "src/cbm.h"] },
+    # package_data={ "cbm": ["src/pycbm.h", "src/cbm.h"] },
     ext_modules=[
         Extension(
             "cbm_cpp",
             ["src/pycbm.cpp", "src/cbm.cpp" ],
-            include_dirs=[get_pybind_include(), get_pybind_include(user=True)],
+            include_dirs=[get_pybind_include(), get_pybind_include(user=True), "src"],
             extra_compile_args=get_extra_compile_args(),
             libraries=get_libraries(),
             language="c++11",
         )
     ],
+    headers=["src/pycbm.h", "src/cbm.h"],
     zip_safe=False,
 )

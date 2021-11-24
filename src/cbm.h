@@ -15,6 +15,8 @@ namespace cbm
         std::vector<std::vector<double>> _f;
         double _y_mean;
 
+        size_t _iterations;
+
         void update_y_hat_sum(
             std::vector<std::vector<uint64_t>> &y_hat_sum,
             std::vector<std::vector<uint8_t>> &x,
@@ -81,5 +83,7 @@ namespace cbm
 
         float get_y_mean() const;
         void set_y_mean(float mean);
+
+        size_t get_iterations() const;
     };
 }

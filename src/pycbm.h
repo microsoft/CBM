@@ -43,5 +43,7 @@ namespace cbm
         float get_y_mean() const;
 
         void set_y_mean(float mean);
+
+        size_t get_iterations() const;
     };
 }
