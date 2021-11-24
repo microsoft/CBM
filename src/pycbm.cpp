@@ -48,14 +48,14 @@ namespace cbm
             throw std::runtime_error("y must be 1-dimensional!");
 
         py::buffer_info x_info = x_b.request();
-        if (!(x_info.itemsize == 1 && (x_info.format == "I" ||
+        if (!(x_info.itemsize >= 1 && x_info.itemsize <= 4 && (x_info.format == "I" ||
                                        x_info.format == "H" ||
                                        x_info.format == "N" ||
                                        x_info.format == "B" ||
                                        x_info.format == "L")))
         {
             std::ostringstream oss;
-            oss << "x must be of type unsigned integer/long with 1 bytes! Must use x.astype('uint8'). "
+            oss << "x must be of type unsigned integer/long with 1, 2, 4 bytes! Must use x.astype('uint8') or uint16/uint32."
                 << "Format: " << x_info.format << " Size: " << x_info.itemsize;
 
             throw std::runtime_error(oss.str().c_str());
@@ -65,8 +65,12 @@ namespace cbm
             throw std::runtime_error("x must be 2-dimensional!");
 
         py::buffer_info x_max_info = x_max_b.request();
-        if (x_max_info.format != py::format_descriptor<uint8_t>::format())
-            throw std::runtime_error("Incompatible format: expected a uint8 array for x_max!");
+        if (!(x_max_info.itemsize == 4 && (x_max_info.format == "I" ||
+                                           x_max_info.format == "H" ||
+                                           x_max_info.format == "N" ||
+                                           x_max_info.format == "B" ||
+                                           x_max_info.format == "L")))
+            throw std::runtime_error("Incompatible format: expected a uint32_t array for x_max!");
 
         if (x_max_info.ndim != 1)
             throw std::runtime_error("Incompatible buffer dimension!");
@@ -76,7 +80,7 @@ namespace cbm
 
         // data
         uint32_t *y = static_cast<uint32_t *>(y_info.ptr);
-        uint8_t *x_max = static_cast<uint8_t *>(x_max_info.ptr);
+        uint32_t *x_max = static_cast<uint32_t *>(x_max_info.ptr);
         char *x_data = static_cast<char *>(x_info.ptr);
 
         // dimensions
@@ -96,15 +100,26 @@ namespace cbm
             max_iterations,
             min_iterations_early_stopping,
             epsilon_early_stopping,
-            single_update_per_iteration);
+            single_update_per_iteration,
+            (uint8_t)x_info.itemsize);
     }
 
     py::array_t<double> PyCBM::predict(py::buffer x_b, bool explain)
     {
         // TODO: fix error messages
         py::buffer_info x_info = x_b.request();
-        if (x_info.format != py::format_descriptor<uint8_t>::format())
-            throw std::runtime_error("Incompatible format: expected a x array!");
+        if (!(x_info.itemsize >= 1 && x_info.itemsize <= 4 && (x_info.format == "I" ||
+                                       x_info.format == "H" ||
+                                       x_info.format == "N" ||
+                                       x_info.format == "B" ||
+                                       x_info.format == "L")))
+        {
+            std::ostringstream oss;
+            oss << "x must be of type unsigned integer/long with 1, 2, 4 bytes! Must use x.astype('uint8') or uint16/uint32."
+                << "Format: " << x_info.format << " Size: " << x_info.itemsize;
+
+            throw std::runtime_error(oss.str().c_str());
+        }
 
         if (x_info.ndim != 2)
             throw std::runtime_error("Incompatible buffer dimension!");
@@ -118,10 +133,29 @@ namespace cbm
         py::array_t<double, py::array::f_style> out_data(
             {(int)n_examples, explain ? (int)(1 + n_features) : 1});
 
-        if (explain)
-            _cbm.predict<true>(x_data, x_info.strides[0], x_info.strides[1], n_examples, n_features, out_data.mutable_data());
-        else
-            _cbm.predict<false>(x_data, x_info.strides[0], x_info.strides[1], n_examples, n_features, out_data.mutable_data());
+        switch (x_info.itemsize)
+        {
+            case 1:
+                if (explain)
+                    _cbm.predict<true, uint8_t>(x_data, x_info.strides[0], x_info.strides[1], n_examples, n_features, out_data.mutable_data());
+                else
+                    _cbm.predict<false, uint8_t>(x_data, x_info.strides[0], x_info.strides[1], n_examples, n_features, out_data.mutable_data());
+                break;
+
+            case 2:
+                if (explain)
+                    _cbm.predict<true, uint16_t>(x_data, x_info.strides[0], x_info.strides[1], n_examples, n_features, out_data.mutable_data());
+                else
+                    _cbm.predict<false, uint16_t>(x_data, x_info.strides[0], x_info.strides[1], n_examples, n_features, out_data.mutable_data());
+                break;
+
+            case 4:
+                if (explain)
+                    _cbm.predict<true, uint32_t>(x_data, x_info.strides[0], x_info.strides[1], n_examples, n_features, out_data.mutable_data());
+                else
+                    _cbm.predict<false, uint32_t>(x_data, x_info.strides[0], x_info.strides[1], n_examples, n_features, out_data.mutable_data());
+                break;
+        }
 
         return out_data;
     }
