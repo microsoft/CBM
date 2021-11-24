@@ -61,7 +61,7 @@ setup(
         'interactive': ['matplotlib>=2.2.0'],
     },
     packages=["cbm"],
-    package_data={ "cbm": ["src/pycbm.h", "src/cbm.h"] },
+    # package_data={ "cbm": ["src/pycbm.h", "src/cbm.h"] },
     ext_modules=[
         Extension(
             "cbm_cpp",
@@ -72,5 +72,6 @@ setup(
             language="c++11",
         )
     ],
+    headers=["src/pycbm.h", "src/cbm.h"],
     zip_safe=False,
 )
