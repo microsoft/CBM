@@ -9,14 +9,13 @@
 
 namespace cbm
 {
-    CBM::CBM()
+    CBM::CBM() : _iterations(0)
     {
     }
 
-    CBM::CBM(const std::vector<std::vector<double>> &f, double y_mean)
+    CBM::CBM(const std::vector<std::vector<double>> &f, double y_mean) :
+        _f(f), _y_mean(y_mean), _iterations(0)
     {
-        _f = f;
-        _y_mean = y_mean;
     }
 
     void CBM::update_y_hat_sum(
@@ -62,6 +61,11 @@ namespace cbm
     void CBM::set_y_mean(float y_mean)
     {
         _y_mean = y_mean;
+    }
+
+    size_t CBM::get_iterations() const
+    {
+        return _iterations;
     }
 
     void CBM::fit(
@@ -119,7 +123,7 @@ namespace cbm
         double learning_rate = learning_rate_step_size;
         double rmse0 = std::numeric_limits<double>::infinity();
 
-        for (size_t t = 0; t < max_iterations; t++, learning_rate += learning_rate_step_size)
+        for (_iterations = 0; _iterations < max_iterations; _iterations++, learning_rate += learning_rate_step_size)
         {
             // cap at 1
             if (learning_rate > 1)
@@ -128,7 +132,7 @@ namespace cbm
             update_y_hat_sum(y_hat_sum, x, n_examples, n_features);
 
             // compute g
-            // TODO: parallelize
+            // #pragma omp for // didn't observe improvement
             for (size_t j = 0; j < n_features; j++)
             {
                 for (size_t k = 0; k <= x_max[j]; k++)
@@ -171,7 +175,7 @@ namespace cbm
 
             // check for early stopping
             // TODO: expose minimum number of rounds
-            if (t > min_iterations_early_stopping &&
+            if (_iterations > min_iterations_early_stopping &&
                 (rmse > rmse0 || (rmse0 - rmse) < epsilon_early_stopping))
             {
                 // TODO: record diagnostics?

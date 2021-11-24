@@ -22,7 +22,7 @@ def get_extra_compile_args():
         cflags = ""
 
     return cflags.split() \
-            + ["-std=c++11", "-Wall", "-Wextra", "-march=native", "-msse2", "-ffast-math", "-mfpmath=sse"]
+            + ["-std=c++11", "-Wall", "-Wextra", "-march=native", "-msse2", "-ffast-math", "-mfpmath=sse"] #, "-fopenmp"]
 
 def get_libraries():
     if platform.system() == "Windows":
@@ -55,7 +55,7 @@ setup(
         "Topic :: Scientific/Engineering :: Mathematics",
     ],
     setup_requires=["pytest-runner"],
-    install_requires=["pybind11>=2.2", "numpy", "scikit-learn"],
+    install_requires=["pybind11>=2.2", "numpy", "scikit-learn", "pandas"],
     tests_require=["pytest", "lightgbm"], #, "interpret"],
     extras_require={
         'interactive': ['matplotlib>=2.2.0'],

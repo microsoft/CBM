@@ -145,6 +145,11 @@ namespace cbm
     {
         _cbm.set_y_mean(y_mean);
     }
+
+    size_t PyCBM::get_iterations() const
+    {
+        return _cbm.get_iterations();
+    }
 };
 
 PYBIND11_MODULE(cbm_cpp, m)
@@ -157,6 +162,7 @@ PYBIND11_MODULE(cbm_cpp, m)
         .def("predict", &cbm::PyCBM::predict)
         .def_property("y_mean", &cbm::PyCBM::get_y_mean, &cbm::PyCBM::set_y_mean)
         .def_property("weights", &cbm::PyCBM::get_weights, &cbm::PyCBM::set_weights)
+        .def_property_readonly("iterations", &cbm::PyCBM::get_iterations)
         .def(py::pickle(
             [](const cbm::PyCBM &p) { // __getstate__
                 /* Return a tuple that fully encodes the state of the object */
