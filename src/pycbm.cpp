@@ -65,7 +65,11 @@ namespace cbm
             throw std::runtime_error("x must be 2-dimensional!");
 
         py::buffer_info x_max_info = x_max_b.request();
-        if (x_max_info.format != py::format_descriptor<uint32_t>::format())
+        if (!(x_max_info.itemsize == 4 && (x_max_info.format == "I" ||
+                                           x_max_info.format == "H" ||
+                                           x_max_info.format == "N" ||
+                                           x_max_info.format == "B" ||
+                                           x_max_info.format == "L")))
             throw std::runtime_error("Incompatible format: expected a uint32_t array for x_max!");
 
         if (x_max_info.ndim != 1)
