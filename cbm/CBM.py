@@ -8,6 +8,7 @@ from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
+from typing import Union
 
 
 class CBM(BaseEstimator):
@@ -28,7 +29,7 @@ class CBM(BaseEstimator):
         self.single_update_per_iteration = single_update_per_iteration
 
     def fit(self,
-            X: np.ndarray,
+            X: Union(np.ndarray, "pd.DataFrame"),
             y: np.ndarray
             ) -> "CBM":
 
