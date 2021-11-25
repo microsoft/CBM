@@ -40,8 +40,6 @@ class CBM(BaseEstimator):
             metric (str): [description]. Defaults to 'rmse'. Options are rmse, smape.
         """        
 
-        self._cpp = None
-        
         self.learning_rate_step_size = learning_rate_step_size
         self.max_iterations = max_iterations
         self.min_iterations_early_stopping = min_iterations_early_stopping
@@ -212,7 +210,7 @@ class CBM(BaseEstimator):
         return self._cpp.predict(X.astype(self._x_type), explain)
 
     def update(self, weights: list, y_mean: float):
-        if  self._cpp is None:
+        if "_cpp" not in self.__dict__:
             self._cpp = cbm_cpp.PyCBM()
 
         x_max_max = max(map(len, weights))
