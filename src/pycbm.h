@@ -32,7 +32,8 @@ namespace cbm
             size_t max_iterations,
             size_t min_iterations_early_stopping,
             double epsilon_early_stopping,
-            bool single_update_per_iteration);
+            bool single_update_per_iteration,
+            std::string metric);
 
         py::array_t<double> predict(py::buffer x_b, bool explain);
 

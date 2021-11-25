@@ -26,7 +26,8 @@ namespace cbm
         size_t max_iterations,
         size_t min_iterations_early_stopping,
         double epsilon_early_stopping,
-        bool single_update_per_iteration)
+        bool single_update_per_iteration,
+        std::string metric)
     {
 
         // can't check compare just the format as linux returns I, windows returns L when using astype('uint32')
@@ -87,6 +88,15 @@ namespace cbm
         ssize_t n_examples = y_info.shape[0];
         ssize_t n_features = x_info.shape[1];
 
+        float (*metric_func)(const uint32_t*, const double*, size_t n_examples) = nullptr;
+
+        if (metric == "rmse")
+            metric_func = metric_RMSE;
+        else if (metric == "smape")
+            metric_func = metric_SMAPE;
+        else
+            throw std::runtime_error("Unknown metric!");
+
         _cbm.fit(
             y,
             x_data,
@@ -101,7 +111,8 @@ namespace cbm
             min_iterations_early_stopping,
             epsilon_early_stopping,
             single_update_per_iteration,
-            (uint8_t)x_info.itemsize);
+            (uint8_t)x_info.itemsize,
+            metric_func);
     }
 
     py::array_t<double> PyCBM::predict(py::buffer x_b, bool explain)

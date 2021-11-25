@@ -12,6 +12,9 @@
 
 namespace cbm
 {
+    float metric_RMSE(const uint32_t* y, const double* y_hat, size_t n_examples);
+    float metric_SMAPE(const uint32_t* y, const double* y_hat, size_t n_examples);
+
     class CBM
     {
         // n_features x max_bin[j] (jagged)
@@ -59,7 +62,8 @@ namespace cbm
             size_t max_iterations,
             size_t min_iterations_early_stopping,
             double epsilon_early_stopping,
-            bool single_update_per_iteration)
+            bool single_update_per_iteration,
+            float (*metric)(const uint32_t*, const double*, size_t n_examples))
         {
 
         _y_mean = y_mean;
@@ -70,6 +74,7 @@ namespace cbm
         std::vector<std::vector<uint64_t>> y_sum(n_features);     // n_features x max_bin[j] (jagged)
         std::vector<std::vector<uint64_t>> y_hat_sum(n_features); // n_features x max_bin[j] (jagged)
         // std::vector<std::vector<uint16_t>> bin_count(n_features);
+        std::vector<double> y_hat(n_examples);
 
         _f.resize(n_features);
 
@@ -136,20 +141,13 @@ namespace cbm
                 }
             }
 
-            // compute RMSE
-            double rmse = 0;
+            // predict
+            y_hat.assign(n_examples, _y_mean);
             for (size_t i = 0; i < n_examples; i++)
-            {
-                // TODO: batch parallelization
-                auto y_hat_i = _y_mean;
                 for (size_t j = 0; j < n_features; j++)
-                {
-                    y_hat_i *= _f[j][x[j][i]];
-                }
+                    y_hat[i] *= _f[j][x[j][i]];
 
-                rmse += (y_hat_i - y[i]) * (y_hat_i - y[i]);
-            }
-            rmse = std::sqrt(rmse);
+            double rmse = metric(y, y_hat.data(), n_examples);
 
             // check for early stopping
             // TODO: expose minimum number of rounds
@@ -163,6 +161,8 @@ namespace cbm
             rmse0 = rmse;
         }
     }
+
+
 
     public:
         CBM();
@@ -182,7 +182,8 @@ namespace cbm
             size_t min_iterations_early_stopping,
             double epsilon_early_stopping,
             bool single_update_per_iteration,
-            uint8_t x_bytes_per_feature);
+            uint8_t x_bytes_per_feature,
+            float (*metric)(const uint32_t*, const double*, size_t n_examples));
 
         template <bool explain, typename T>
         void predict(

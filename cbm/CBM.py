@@ -24,6 +24,7 @@ class CBM(BaseEstimator):
         single_update_per_iteration:bool = True,
         date_features: Union[str, List[str]] = 'day,month',
         binning: Union[int, lambda x: int] = 10,
+        metric: str = 'rmse'
         ) -> None:
         """Initialize the CBM model.
 
@@ -36,6 +37,7 @@ class CBM(BaseEstimator):
             date_features (List[str], optional): [description]. Defaults to ['day', 'month'].
             binning (Union[int, lambda x, optional): [description]. Defaults to 10. 
                 The number of bins to create for continuous features. Supply lambda for flexible binning.
+            metric (str): [description]. Defaults to 'rmse'. Options are rmse, smape.
         """        
 
         self.learning_rate_step_size = learning_rate_step_size
@@ -49,6 +51,7 @@ class CBM(BaseEstimator):
             date_features = ",".join(date_features)
         self.date_features = date_features
         self.binning = binning
+        self.metric = metric
 
     def get_date_features(self) -> List[str]:
         return self.date_features.split(",")
@@ -156,6 +159,7 @@ class CBM(BaseEstimator):
             self.min_iterations_early_stopping,
             self.epsilon_early_stopping,
             self.single_update_per_iteration,
+            self.metric
             )
 
         self.is_fitted_ = True
@@ -206,7 +210,8 @@ class CBM(BaseEstimator):
         return self._cpp.predict(X.astype(self._x_type), explain)
 
     def update(self, weights: list, y_mean: float):
-        self._cpp = cbm_cpp.PyCBM()
+        if "_cpp" not in self.__dict__:
+            self._cpp = cbm_cpp.PyCBM()
 
         x_max_max = max(map(len, weights))
         if x_max_max <= 255:
