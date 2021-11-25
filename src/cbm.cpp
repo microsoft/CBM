@@ -53,19 +53,41 @@ namespace cbm
         size_t min_iterations_early_stopping,
         double epsilon_early_stopping,
         bool single_update_per_iteration,
-        uint8_t x_bytes_per_feature)
+        uint8_t x_bytes_per_feature,
+        float (*metric)(const uint32_t*, const double*, size_t n_examples))
     {
         switch (x_bytes_per_feature)
         {
             case 1:
-                fit_internal<uint8_t>(y, x_data, x_stride0, x_stride1, n_examples, n_features, y_mean, x_max, learning_rate_step_size, max_iterations, min_iterations_early_stopping, epsilon_early_stopping, single_update_per_iteration);
+                fit_internal<uint8_t>(y, x_data, x_stride0, x_stride1, n_examples, n_features, y_mean, x_max, learning_rate_step_size, max_iterations, min_iterations_early_stopping, epsilon_early_stopping, single_update_per_iteration, metric);
                 break;
             case 2:
-                fit_internal<uint16_t>(y, x_data, x_stride0, x_stride1, n_examples, n_features, y_mean, x_max, learning_rate_step_size, max_iterations, min_iterations_early_stopping, epsilon_early_stopping, single_update_per_iteration);
+                fit_internal<uint16_t>(y, x_data, x_stride0, x_stride1, n_examples, n_features, y_mean, x_max, learning_rate_step_size, max_iterations, min_iterations_early_stopping, epsilon_early_stopping, single_update_per_iteration, metric);
                 break;
             case 4:
-                fit_internal<uint32_t>(y, x_data, x_stride0, x_stride1, n_examples, n_features, y_mean, x_max, learning_rate_step_size, max_iterations, min_iterations_early_stopping, epsilon_early_stopping, single_update_per_iteration);
+                fit_internal<uint32_t>(y, x_data, x_stride0, x_stride1, n_examples, n_features, y_mean, x_max, learning_rate_step_size, max_iterations, min_iterations_early_stopping, epsilon_early_stopping, single_update_per_iteration, metric);
                 break;
         }
+    }
+
+    float metric_RMSE(const uint32_t* y, const double* y_hat, size_t n_examples)
+    {
+        double rmse = 0;
+        for (size_t i = 0; i < n_examples; i++)
+            rmse += (y_hat[i] - y[i]) * (y_hat[i] - y[i]);
+        
+        return std::sqrt(rmse);
+    }
+
+    float metric_SMAPE(const uint32_t* y, const double* y_hat, size_t n_examples)
+    {
+        double smape = 0;
+        for (size_t i = 0; i < n_examples; i++) {
+            if (y[i] == 0 && y_hat[i] == 0)
+                continue;
+            smape += std::abs(y[i] - y_hat[i]) / (y[i] + y_hat[i]);
+        }
+        
+        return (200 * smape) / n_examples;
     }
 }
