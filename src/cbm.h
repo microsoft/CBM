@@ -155,7 +155,7 @@ namespace cbm
                 (rmse > rmse0 || (rmse0 - rmse) < epsilon_early_stopping))
             {
                 // TODO: record diagnostics?
-                printf("early stopping %1.4f vs %1.4f after t=%d\n", rmse, rmse0, (int)t);
+                // printf("early stopping %1.4f vs %1.4f after t=%d\n", rmse, rmse0, (int)t);
                 break;
             }
             rmse0 = rmse;
