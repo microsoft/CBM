@@ -9,7 +9,7 @@ from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
-from typing import List, Union
+from typing import List, Tuple, Union
 from pandas.api.types import CategoricalDtype
 
 
@@ -37,7 +37,7 @@ class CBM(BaseEstimator):
             date_features (List[str], optional): [description]. Defaults to ['day', 'month'].
             binning (Union[int, lambda x, optional): [description]. Defaults to 10. 
                 The number of bins to create for continuous features. Supply lambda for flexible binning.
-            metric (str): [description]. Defaults to 'rmse'. Options are rmse, smape.
+            metric (str): [description]. Used to determine when to stop. Defaults to 'rmse'. Options are rmse, smape, l1.
         """        
 
         self.learning_rate_step_size = learning_rate_step_size
@@ -228,13 +228,91 @@ class CBM(BaseEstimator):
 
         self.is_fitted_ = True
 
-    def plot_importance(self, feature_names: list = None, **kwargs):
+    def _plot_importance_categorical(self, ax, feature_idx: int, vmin: float, vmax: float, is_continuous: bool):
+        import matplotlib.pyplot as plt
+
+        cmap = plt.get_cmap("RdYlGn")
+
+        # plot positive/negative impact (so 1.x to 0.x)
+        weights = np.array(self.weights[feature_idx]) - 1
+
+        alpha = 1
+        if self._feature_bins[feature_idx] is not None or is_continuous:
+            ax.plot(range(len(weights)), weights)
+            alpha = 0.3
+
+        # color = np.where(weights < 0, 'xkcd:tomato', 'xkcd:green')
+        # color = np.where(weights < 0, cmap(0), cmap(1))
+        weights_normalized = [x - vmin / (vmax - vmin) for x in weights]
+
+        ax.bar(range(len(weights)), weights, color=cmap(weights_normalized), edgecolor='black', alpha=alpha)
+        ax.set_ylim(vmin, vmax)
+
+        # ax.barh(range(len(weights)), weights, color=cmap(weights_normalized), edgecolor='black', alpha=0.3)
+        # ax.set_xlim(vmin, vmax)
+
+        # ax_sub.set_title(feature_names[feature_idx] if feature_names is not None else f'Feature {feature_idx}')
+        ax.set_ylabel('% change')
+
+        if self._feature_names is not None:
+            ax.set_xlabel(self._feature_names[feature_idx])
+
+        if self._feature_categories[feature_idx] is not None:
+            ax.set_xticks(range(len(self._feature_categories[feature_idx])))
+            ax.set_xticklabels(self._feature_categories[feature_idx])
+
+    def _plot_importance_interaction(self, ax, feature_idx: int, vmin: float, vmax: float):
+        import matplotlib.pyplot as plt
+
+        weights = np.array(self.weights[feature_idx]) - 1
+
+        cat_df = pd.DataFrame(
+            [(int(c.split('_')[0]), int(c.split('_')[1]), i) for i, c in enumerate(self._feature_categories[feature_idx])],
+            columns=['f0', 'f1', 'idx'])
+    
+        cat_df.sort_values(['f0', 'f1'], inplace=True)
+    
+        cat_df_2d = cat_df.pivot(index='f0', columns='f1', values='idx')
+
+        # resort index by mean weight value
+        zi = np.array(weights)[cat_df_2d.to_numpy()]
+
+        sort_order = np.argsort(np.max(zi, axis=1))
+        cat_df_2d = cat_df_2d.reindex(cat_df_2d.index[sort_order])
+
+        # construct data matrices
+        xi = cat_df_2d.columns
+        yi = cat_df_2d.index
+        zi =  np.array(weights)[cat_df_2d.to_numpy()]
+    
+        im = ax.imshow(zi, cmap=plt.get_cmap("RdYlGn"), aspect='auto', vmin=vmin, vmax=vmax)
+    
+        cbar = ax.figure.colorbar(im, ax=ax)
+        cbar.ax.set_ylabel('% change', rotation=-90, va="bottom")
+    
+        if self._feature_names is not None:
+            names = self._feature_names[feature_idx].split('_X_')
+            ax.set_ylabel(names[0])
+            ax.set_xlabel(names[1])
+
+        # Show all ticks and label them with the respective list entries
+        ax.set_xticks(np.arange(len(xi)), labels=xi)
+        ax.set_yticks(np.arange(len(yi)), labels=yi)
+
+    def plot_importance(self, feature_names: list = None, continuous_features: list = None, **kwargs):
+        """Plot feature importance.
+
+        Args:
+            feature_names (list, optional): [description]. If the model was trained using a pandas dataframe, the feature names are automatically
+                extracted from the dataframe. If the model was trained using a numpy array, the feature names need to supplied.
+            continuous_features (list, optional): [description]. Will change the plot accordingly.
+        """        
+        import matplotlib.pyplot as plt
+
         check_is_fitted(self, "is_fitted_")
 
-        if feature_names is None:
-            feature_names = self._feature_names
-
-        import matplotlib.pyplot as plt
+        if feature_names is not None:
+            self._feature_names = feature_names
 
         n_features = len(self.weights)
 
@@ -244,24 +322,33 @@ class CBM(BaseEstimator):
         if n_cols * n_rows < n_features:
             n_rows += 1
 
-        fig, ax = plt.subplots(n_rows, n_cols, sharex=True, **kwargs)
+        fig, ax = plt.subplots(n_rows, n_cols, **kwargs)
+        for r in range(n_rows):
+            for c in range(n_cols):
+                ax[r, c].set_axis_off()
 
         fig.suptitle(f'Response mean: {self.y_mean:0.4f} | Iterations {self.iterations}')
 
-        for f in range(n_features):
-            w = np.array(self.weights[f])
-            
-            color = np.where(w < 1, 'xkcd:tomato', 'xkcd:green')
+        vmin = np.min([np.min(w) for w in self.weights]) - 1
+        vmax = np.max([np.max(w) for w in self.weights]) - 1
 
-            ax_sub = ax[f // n_cols, f % n_cols]
-            ax_sub.barh(range(len(w)), w - 1, color=color)
+        for feature_idx in range(n_features):
+            ax_sub = ax[feature_idx // n_cols, feature_idx % n_cols]
+            ax_sub.set_axis_on()
 
-            ax_sub.set_title(feature_names[f] if feature_names is not None else f'Feature {f}')
+            # ax_sub.set_title(feature_names[feature_idx] if feature_names is not None else f'Feature {feature_idx}')
+            if continuous_features is None:
+                is_continuous = False
+            else:
+                if self._feature_names is not None:
+                    is_continuous = self._feature_names[feature_idx] in continuous_features
+                else:
+                    is_continuous = feature_idx in continuous_features
 
-            if self._feature_categories[f] is not None:
-                ax_sub.set_yticks(range(len(self._feature_categories[f])))
-                ax_sub.set_yticklabels(self._feature_categories[f])
-
+            if self._feature_names is not None and '_X_' in self._feature_names[feature_idx]:
+                self._plot_importance_interaction(ax_sub, feature_idx, vmin, vmax)
+            else:
+                self._plot_importance_categorical(ax_sub, feature_idx, vmin, vmax, is_continuous)
 
     @property
     def weights(self):

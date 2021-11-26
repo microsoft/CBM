@@ -14,6 +14,7 @@ namespace cbm
 {
     float metric_RMSE(const uint32_t* y, const double* y_hat, size_t n_examples);
     float metric_SMAPE(const uint32_t* y, const double* y_hat, size_t n_examples);
+    float metric_L1(const uint32_t* y, const double* y_hat, size_t n_examples);
 
     class CBM
     {

@@ -94,6 +94,8 @@ namespace cbm
             metric_func = metric_RMSE;
         else if (metric == "smape")
             metric_func = metric_SMAPE;
+        else if (metric == "l1")
+            metric_func = metric_L1;
         else
             throw std::runtime_error("Unknown metric!");
 
