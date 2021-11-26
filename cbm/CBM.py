@@ -241,8 +241,6 @@ class CBM(BaseEstimator):
             ax.plot(range(len(weights)), weights)
             alpha = 0.3
 
-        # color = np.where(weights < 0, 'xkcd:tomato', 'xkcd:green')
-        # color = np.where(weights < 0, cmap(0), cmap(1))
         weights_normalized = [x - vmin / (vmax - vmin) for x in weights]
 
         ax.bar(range(len(weights)), weights, color=cmap(weights_normalized), edgecolor='black', alpha=alpha)
@@ -259,7 +257,7 @@ class CBM(BaseEstimator):
 
         if self._feature_categories[feature_idx] is not None:
             ax.set_xticks(range(len(self._feature_categories[feature_idx])))
-            ax.set_xticklabels(self._feature_categories[feature_idx])
+            ax.set_xticklabels(self._feature_categories[feature_idx], rotation=45)
 
     def _plot_importance_interaction(self, ax, feature_idx: int, vmin: float, vmax: float):
         import matplotlib.pyplot as plt

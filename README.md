@@ -9,7 +9,19 @@
 
 This is an efficient and Scikit-learn compatible implementation of the machine learning algorithm [Cyclic Boosting -- an explainable supervised machine learning algorithm](https://arxiv.org/abs/2002.03425), specifically for predicting count-data, such as sales and demand.
 
+## Features
+
+* Optimized for categorical features
+* Continuous features are discretized using [pandas.qcut](https://pandas.pydata.org/docs/reference/api/pandas.qcut.html).
+* Date auto-expansion (weekday + month).
+* Feature importance plots: categorical, continuous and interactions.
+* Metrics to stop training: RMSE, L1, SMAPE.
+
 ## Usage
+
+The CBM model predicts by multiplying the global mean with each weight estimate for each bin and feature. Thus the weights can be interpreted as % increase or decrease from the global mean. e.g. a weight of 1.2 for the bin _Monday_ of the feature _Day-of-Week_ can be interpreted as a 20% increase of the target.
+
+<img src="https://render.githubusercontent.com/render/math?math=\hat{y}_i = \mu \cdot \product^{p}_{j=1} f^k_j"> with <img src="https://render.githubusercontent.com/render/math?math=k = \{x_{j,_i} \in b^k_j \}">
 
 ```bash
 pip install cyclicbm
@@ -17,55 +29,45 @@ pip install cyclicbm
 
 ```python
 import cbm
-import numpy as np
+from sklearn.metrics import mean_squared_error
 
-x_train: np.ndarray = ... # will be cast to uint8, so make sure you featurize before hand
-y_train: np.ndarray = ... # will be cast to uint32
+# load data using https://www.kaggle.com/c/demand-forecasting-kernels-only
+train = pd.read_csv('data/train.csv', parse_dates=['date'])
+test  = pd.read_csv('data/test.csv',  parse_dates=['date']) 
 
+# feature engineering
+min_date = train['date'].min()
+
+def featurize(df):
+    out = pd.DataFrame({
+        # TODO: for prediction such features need separate modelling
+        'seasonal' : (df['date'] - min_date).dt.days // 60,
+        'store'    : df['store'], 
+        'item'     : df['item'], 
+        'date'     : df['date'],
+        # <name-1> _X_ <name-2> to mark interaction features
+        'item_X_month': df['item'].astype(str) + '_' + df['date'].dt.month.astype(str)
+    })
+    
+    return out
+
+x_train_df = featurize(train)
+x_test_df  = featurize(test)
+y_train = train['sales']
+
+# model training
 model = cbm.CBM()
-model.fit(x_train, y_train)
+model.fit(x_train_df, y_train)
 
-x_test: np.numpy = ...
-y_pred = model.predict(x_test)
+# test on train error
+y_pred_train = model.predict(x_train_df).flatten()
+print('RMSE', mean_squared_error(y_pred_train, y_train, squared=False))
+
+# plotting
+model.plot_importance(figsize=(20, 20), continuous_features=['seasonal'])
 ```
 
-## Explainability
-
-The CBM model predicts by multiplying the global mean with each weight estimate for each bin and feature. Thus the weights can be interpreted as % increase or decrease from the global mean. e.g. a weight of 1.2 for the bin _Monday_ of the feature _Day-of-Week_ can be interpreted as a 20% increase of the target.
-
-<img src="https://render.githubusercontent.com/render/math?math=\hat{y}_i = \mu \cdot \product^{p}_{j=1} f^k_j"> with <img src="https://render.githubusercontent.com/render/math?math=k = \{x_{j,_i} \in b^k_j \}">
-
-```python
-model = cbm.CBM()
-model.fit(x_train, y_train)
-
-import matplotlib.pyplot as plt
-
-fig, axes = plt.subplots(2, 
-                         int(np.ceil(x_train.shape[1] / 2)),
-                         figsize=(25, 20),
-                         sharex=True)
-
-for feature in np.arange(x_train.shape[1]):
-    w = model.weights[feature]
-    
-    ax = axes[feature % 2, feature // 2]
-    (ax.barh(x_train.iloc[:,feature].cat.categories.astype(str),
-             np.array(w) - 1, # make sure it looks nice w/ bars go up and down from zero
-             )
-    )
-    
-    ax.set_title(x_train.columns[feature])
-    ax.xaxis.set_tick_params(which='both', labelbottom=True)
-    
-fig.tight_layout()
-``` 
-
-## Featurization
-
-Categorical features can be passed as 0-based indices, with a maximum of 255 categories supported at the moment.
-
-Continuous features need to be discretized. [pandas.qcut](https://pandas.pydata.org/docs/reference/api/pandas.qcut.html) for equal-sized bins or [numpy.interp](https://numpy.org/doc/stable/reference/generated/numpy.interp.html) for equal-distant bins yield good results for us.
+![Feature Importance Plot](images/cbm_kaggle.png)
 
 ## Contributing
 
