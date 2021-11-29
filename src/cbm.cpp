@@ -90,4 +90,14 @@ namespace cbm
         
         return (200 * smape) / n_examples;
     }
+
+
+    float metric_L1(const uint32_t* y, const double* y_hat, size_t n_examples) 
+    {
+        double l1 = 0;
+        for (size_t i = 0; i < n_examples; i++)
+            l1 += std::abs(y_hat[i] - y[i]);
+        
+        return l1;
+    }
 }
