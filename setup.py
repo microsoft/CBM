@@ -36,7 +36,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="cyclicbm",
-    version="0.0.8",
+    version="0.0.9",
     description="Cyclic Boosting Machines",
     long_description=long_description,
     long_description_content_type='text/markdown',
