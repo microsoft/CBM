@@ -27,7 +27,8 @@ namespace cbm
         size_t min_iterations_early_stopping,
         double epsilon_early_stopping,
         bool single_update_per_iteration,
-        std::string metric)
+        std::string metric,
+        bool enable_bin_count)
     {
 
         // can't check compare just the format as linux returns I, windows returns L when using astype('uint32')
@@ -114,7 +115,8 @@ namespace cbm
             epsilon_early_stopping,
             single_update_per_iteration,
             (uint8_t)x_info.itemsize,
-            metric_func);
+            metric_func,
+            enable_bin_count);
     }
 
     py::array_t<double> PyCBM::predict(py::buffer x_b, bool explain)
@@ -197,6 +199,10 @@ namespace cbm
     {
         return _cbm.get_iterations();
     }
+
+    const std::vector<std::vector<uint32_t>> &PyCBM::get_bin_count() const {
+        return _cbm.get_bin_count();
+    }
 };
 
 PYBIND11_MODULE(cbm_cpp, m)
@@ -210,6 +216,7 @@ PYBIND11_MODULE(cbm_cpp, m)
         .def_property("y_mean", &cbm::PyCBM::get_y_mean, &cbm::PyCBM::set_y_mean)
         .def_property("weights", &cbm::PyCBM::get_weights, &cbm::PyCBM::set_weights)
         .def_property_readonly("iterations", &cbm::PyCBM::get_iterations)
+        .def_property_readonly("bin_count", &cbm::PyCBM::get_bin_count)
         .def(py::pickle(
             [](const cbm::PyCBM &p) { // __getstate__
                 /* TODO: this does not include the feature pre-processing */

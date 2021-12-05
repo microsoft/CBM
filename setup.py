@@ -22,7 +22,7 @@ def get_extra_compile_args():
         cflags = ""
 
     return cflags.split() \
-            + ["-std=c++11", "-Wall", "-Wextra", "-march=native", "-msse2", "-ffast-math", "-mfpmath=sse"] #, "-fopenmp"]
+            + ["-std=c++11", "-Wall", "-Wextra", "-march=native", "-msse2", "-ffast-math", "-mfpmath=sse", "-fopenmp", "-lgomp"]
 
 def get_libraries():
     if platform.system() == "Windows":
@@ -70,6 +70,7 @@ setup(
             extra_compile_args=get_extra_compile_args(),
             libraries=get_libraries(),
             language="c++11",
+            extra_link_args=['-fopenmp']
         )
     ],
     headers=["src/pycbm.h", "src/cbm.h"],

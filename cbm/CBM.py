@@ -24,7 +24,8 @@ class CBM(BaseEstimator):
         single_update_per_iteration:bool = True,
         date_features: Union[str, List[str]] = 'day,month',
         binning: Union[int, lambda x: int] = 10,
-        metric: str = 'rmse'
+        metric: str = 'rmse',
+        enable_bin_count: bool = False
         ) -> None:
         """Initialize the CBM model.
 
@@ -45,6 +46,7 @@ class CBM(BaseEstimator):
         self.min_iterations_early_stopping = min_iterations_early_stopping
         self.epsilon_early_stopping = epsilon_early_stopping
         self.single_update_per_iteration = single_update_per_iteration
+        self.enable_bin_count = enable_bin_count
 
         # lets make sure it's serializable
         if isinstance(date_features, list):
@@ -95,7 +97,7 @@ class CBM(BaseEstimator):
                     # deal with continuous features
                     bin_num = self.binning if isinstance(self.binning, int) else self.binning(X[col])
 
-                    X_binned, bins  = pd.qcut(X[col].fillna(0), bin_num, retbins=True)
+                    X_binned, bins  = pd.qcut(X[col].fillna(0), bin_num, duplicates='drop', retbins=True)
 
                     self._feature_names.append(col)
                     self._feature_categories.append(X_binned.cat.categories.astype(str).tolist())
@@ -159,7 +161,8 @@ class CBM(BaseEstimator):
             self.min_iterations_early_stopping,
             self.epsilon_early_stopping,
             self.single_update_per_iteration,
-            self.metric
+            self.metric,
+            self.enable_bin_count
             )
 
         self.is_fitted_ = True
@@ -359,3 +362,7 @@ class CBM(BaseEstimator):
     @property
     def iterations(self):
         return self._cpp.iterations
+
+    @property
+    def bin_count(self):
+        return self._cpp.bin_count
