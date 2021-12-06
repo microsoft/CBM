@@ -29,6 +29,52 @@ def test_poisson_random():
     # for i, idx in enumerate(x):
     #     y[i] = y_base[i, idx[0], idx[1]]
 
+def test_nyc_bicycle_validate():
+    np.random.seed(42)
+
+    # read data
+    bic = pd.read_csv('data/nyc_bb_bicyclist_counts.csv')
+    bic['Date'] = pd.to_datetime(bic['Date'])
+    bic['Weekday'] = bic['Date'].dt.weekday
+
+    y = bic['BB_COUNT'].values.astype('uint32')
+
+    # train/test split
+    split = int(len(y) * 0.8)
+    train_idx = np.arange(0, split)
+    test_idx  = np.arange(split + 1, len(y))
+
+    y_train = y[train_idx]
+    y_test  = y[test_idx]
+
+    test_err_expected = {2: 449.848, 3: 533.465, 4: 503.399, 5: 534.738, 6: 527.854, 7: 529.942, 8: 597.041, 9: 615.646, 10: 560.182}
+    train_err_expected = {2: 632.521, 3: 578.816, 4: 588.342, 5: 563.843, 6: 552.219, 7: 547.073, 8: 518.893, 9: 525.629, 10: 523.194}
+
+    for bins in [2, 3, 4, 5, 6, 7, 8, 9, 10]:
+        x = np.stack([
+            bic['Weekday'].values,
+            pd.qcut(bic['HIGH_T'], bins).cat.codes,
+            pd.qcut(bic['LOW_T'], bins).cat.codes,
+            pd.qcut(bic['PRECIP'], 5, duplicates='drop').cat.codes
+        ],
+            axis=1)\
+                .astype('uint8')
+
+        x_train = x[train_idx, ]
+        x_test  = x[test_idx, ]
+
+        # fit CBM model
+        model = cbm.CBM(single_update_per_iteration=False)
+        model.fit(x_train, y_train)
+
+        y_pred = model.predict(x_test)
+        y_pred_train = model.predict(x_train)
+
+        test_err = mean_squared_error(y_test, y_pred, squared=False)
+        train_err = mean_squared_error(y_train, y_pred_train, squared=False)
+
+        assert test_err_expected[bins] == pytest.approx(test_err, abs=1e-2)
+        assert train_err_expected[bins] == pytest.approx(train_err, abs=1e-2)
 
 def test_nyc_bicycle():
     np.random.seed(42)
