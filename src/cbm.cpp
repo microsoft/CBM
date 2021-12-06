@@ -87,6 +87,7 @@ namespace cbm
     float metric_RMSE(const uint32_t* y, const double* y_hat, size_t n_examples)
     {
         double rmse = 0;
+        #pragma omp parallel for schedule(static, 10000) reduction(+: rmse)
         for (size_t i = 0; i < n_examples; i++)
             rmse += (y_hat[i] - y[i]) * (y_hat[i] - y[i]);
         

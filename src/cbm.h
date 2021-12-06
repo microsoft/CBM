@@ -140,7 +140,6 @@ namespace cbm
                 update_y_hat_sum(y_hat, y_hat_sum, x, n_examples, n_features);
 
                 // compute g
-                #pragma omp parallel for
                 for (size_t j = 0; j < n_features; j++)
                 {
                     for (size_t k = 0; k <= x_max[j]; k++)
@@ -161,7 +160,6 @@ namespace cbm
                                 _f[j][k] *= std::exp(learning_rate * std::log(g)); // eqn 2 (b) + eqn 4
 
                             if (!single_update_per_iteration) {
-                                #pragma omp critical
                                 update_y_hat_sum(y_hat, y_hat_sum, x, n_examples, n_features);
                             }
                         }
