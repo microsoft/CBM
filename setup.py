@@ -21,8 +21,13 @@ def get_extra_compile_args():
     if cflags is None:
         cflags = ""
 
-    return cflags.split() \
-            + ["-std=c++11", "-Wall", "-Wextra", "-march=native", "-msse2", "-ffast-math", "-mfpmath=sse", "-fopenmp", "-lgomp"]
+    cflags = cflags.split() \
+            + ["-std=c++11", "-Wall", "-Wextra", "-march=native", "-msse2", "-ffast-math", "-mfpmath=sse"]
+
+    if platform.system() == "Linux":
+        cflags += ["-fopenmp", "-lgomp"]
+
+    return cflags
 
 def get_libraries():
     if platform.system() == "Windows":
@@ -61,7 +66,6 @@ setup(
         'interactive': ['matplotlib>=2.2.0'],
     },
     packages=["cbm"],
-    # package_data={ "cbm": ["src/pycbm.h", "src/cbm.h"] },
     ext_modules=[
         Extension(
             "cbm_cpp",
@@ -70,7 +74,7 @@ setup(
             extra_compile_args=get_extra_compile_args(),
             libraries=get_libraries(),
             language="c++11",
-            extra_link_args=['-fopenmp']
+            extra_link_args=['-fopenmp'] if platform.system() == "Linux" else []
         )
     ],
     headers=["src/pycbm.h", "src/cbm.h"],
