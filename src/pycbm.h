@@ -33,7 +33,8 @@ namespace cbm
             size_t min_iterations_early_stopping,
             double epsilon_early_stopping,
             bool single_update_per_iteration,
-            std::string metric);
+            std::string metric,
+            bool enable_bin_count);
 
         py::array_t<double> predict(py::buffer x_b, bool explain);
 
@@ -46,5 +47,7 @@ namespace cbm
         void set_y_mean(float mean);
 
         size_t get_iterations() const;
+
+        const std::vector<std::vector<uint32_t>> &get_bin_count() const;
     };
 }

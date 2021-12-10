@@ -39,6 +39,10 @@ namespace cbm
         return _iterations;
     }
 
+    const std::vector<std::vector<uint32_t>> & CBM::get_bin_count() const {
+        return _bin_count;
+    }
+
     void CBM::fit(
         const uint32_t *y,
         const char *x_data,
@@ -54,18 +58,28 @@ namespace cbm
         double epsilon_early_stopping,
         bool single_update_per_iteration,
         uint8_t x_bytes_per_feature,
-        float (*metric)(const uint32_t*, const double*, size_t n_examples))
+        float (*metric)(const uint32_t*, const double*, size_t n_examples),
+        bool enable_bin_count)
     {
         switch (x_bytes_per_feature)
         {
             case 1:
-                fit_internal<uint8_t>(y, x_data, x_stride0, x_stride1, n_examples, n_features, y_mean, x_max, learning_rate_step_size, max_iterations, min_iterations_early_stopping, epsilon_early_stopping, single_update_per_iteration, metric);
+                if (enable_bin_count)
+                    fit_internal<uint8_t, true>(y, x_data, x_stride0, x_stride1, n_examples, n_features, y_mean, x_max, learning_rate_step_size, max_iterations, min_iterations_early_stopping, epsilon_early_stopping, single_update_per_iteration, metric);
+                else
+                    fit_internal<uint8_t, false>(y, x_data, x_stride0, x_stride1, n_examples, n_features, y_mean, x_max, learning_rate_step_size, max_iterations, min_iterations_early_stopping, epsilon_early_stopping, single_update_per_iteration, metric);
                 break;
             case 2:
-                fit_internal<uint16_t>(y, x_data, x_stride0, x_stride1, n_examples, n_features, y_mean, x_max, learning_rate_step_size, max_iterations, min_iterations_early_stopping, epsilon_early_stopping, single_update_per_iteration, metric);
+                if (enable_bin_count)
+                    fit_internal<uint16_t, true>(y, x_data, x_stride0, x_stride1, n_examples, n_features, y_mean, x_max, learning_rate_step_size, max_iterations, min_iterations_early_stopping, epsilon_early_stopping, single_update_per_iteration, metric);
+                else
+                    fit_internal<uint16_t, false>(y, x_data, x_stride0, x_stride1, n_examples, n_features, y_mean, x_max, learning_rate_step_size, max_iterations, min_iterations_early_stopping, epsilon_early_stopping, single_update_per_iteration, metric);
                 break;
             case 4:
-                fit_internal<uint32_t>(y, x_data, x_stride0, x_stride1, n_examples, n_features, y_mean, x_max, learning_rate_step_size, max_iterations, min_iterations_early_stopping, epsilon_early_stopping, single_update_per_iteration, metric);
+                if (enable_bin_count)
+                    fit_internal<uint32_t, true>(y, x_data, x_stride0, x_stride1, n_examples, n_features, y_mean, x_max, learning_rate_step_size, max_iterations, min_iterations_early_stopping, epsilon_early_stopping, single_update_per_iteration, metric);
+                else
+                    fit_internal<uint32_t, false>(y, x_data, x_stride0, x_stride1, n_examples, n_features, y_mean, x_max, learning_rate_step_size, max_iterations, min_iterations_early_stopping, epsilon_early_stopping, single_update_per_iteration, metric);
                 break;
         }
     }
@@ -73,6 +87,7 @@ namespace cbm
     float metric_RMSE(const uint32_t* y, const double* y_hat, size_t n_examples)
     {
         double rmse = 0;
+        #pragma omp parallel for schedule(static, 10000) reduction(+: rmse)
         for (size_t i = 0; i < n_examples; i++)
             rmse += (y_hat[i] - y[i]) * (y_hat[i] - y[i]);
         
@@ -82,6 +97,7 @@ namespace cbm
     float metric_SMAPE(const uint32_t* y, const double* y_hat, size_t n_examples)
     {
         double smape = 0;
+        #pragma omp parallel for schedule(static, 10000) reduction(+: smape)
         for (size_t i = 0; i < n_examples; i++) {
             if (y[i] == 0 && y_hat[i] == 0)
                 continue;
@@ -95,9 +111,10 @@ namespace cbm
     float metric_L1(const uint32_t* y, const double* y_hat, size_t n_examples) 
     {
         double l1 = 0;
+        #pragma omp parallel for schedule(static, 10000) reduction(+: l1)
         for (size_t i = 0; i < n_examples; i++)
             l1 += std::abs(y_hat[i] - y[i]);
         
-        return l1;
+        return l1 / n_examples;
     }
 }
