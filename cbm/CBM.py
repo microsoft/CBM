@@ -129,6 +129,8 @@ class CBM(BaseEstimator):
             X = np.column_stack(X_numeric)
         else:
             self._feature_names = None
+            # make sure we can handle unknown values encoded as -1
+            X += 1
 
         X, y = check_X_y(X, y, y_numeric=True)
 
@@ -206,6 +208,8 @@ class CBM(BaseEstimator):
                     X_numeric.append(X[col])
 
             X = np.column_stack(X_numeric)
+        else:
+            X += 1
 
         X = check_array(X)
         check_is_fitted(self, "is_fitted_")
