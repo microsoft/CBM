@@ -7,6 +7,7 @@ import numpy as np
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.utils import indexable
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.utils.validation import _check_feature_names_in
 
 from datetime import timedelta
 
@@ -83,26 +84,27 @@ class TemporalSplit(TimeSeriesSplit):
 		)
 
 
+# TODO: add unit test
 class DateEncoder(BaseEstimator, TransformerMixin):
-    def __init__(self, feature_name, component = 'month' ):
-        self.feature_name = feature_name
-        
-        if component == 'day':
-            self.categories = calendar.day_abbr
-            self.column_to_ordinal = lambda col: col.dayofweek.values
-        elif component == 'weekday':
-            self.categories = calendar.weekday
-            self.column_to_ordinal = lambda col: col.weekday.values
+    def __init__(self, component = 'month' ):
+        if component == 'weekday':
+            self.categories_ = list(calendar.day_abbr)
+            self.column_to_ordinal_ = lambda col: col.dt.weekday.values
+        elif component == 'dayofyear':
+            self.categories_ = list(range(1, 366))
+            self.column_to_ordinal_ = lambda col: col.dt.dayofyear.values
         elif component == 'month':
-            self.categories = calendar.month_abbr
-            self.column_to_ordinal = lambda col: col.month.values
+            self.categories_ = list(calendar.month_abbr)
+            self.column_to_ordinal_ = lambda col: col.dt.month.values
         else:
             raise ValueError('component must be either day or month')
         
         self.component = component
     
     def fit(self, X, y = None):
+        self._validate_data(X, dtype="datetime64")
+
         return self
     
     def transform(self, X, y = None):
-        return self.column_to_ordinal(X.iloc[:,0].dt)[:,np.newaxis]
+        return X.apply(self.column_to_ordinal_, axis=0)

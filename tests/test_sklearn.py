@@ -29,15 +29,14 @@ def test_nyc_bicycle_sklearn():
 		# (OrdinalEncoder(dtype='int', handle_unknown='use_encoded_value', unknown_value=-1), # +1 in CBM code
 		# ['store_nbr', 'item_nbr', 'onpromotion', 'family', 'class', 'perishable']),
 	
-		(cbm.DateEncoder('weekday', 'weekday'), ['Date']),
+		(cbm.DateEncoder('weekday'), ['Date', 'Date']),
+		(cbm.DateEncoder('month'),   ['Date']),
 		(KBinsDiscretizer(n_bins=2, encode='ordinal'), ['HIGH_T', 'LOW_T']),
 		(KBinsDiscretizer(n_bins=5, encode='ordinal'), ['PRECIP']),
 	)
 
 	cbm_model = cbm.CBM()
 	pipeline = make_pipeline(cats, cbm_model)
-
-	# print(pipeline.get_params().keys())
 
 	cv = GridSearchCV(
 		pipeline,
@@ -50,3 +49,5 @@ def test_nyc_bicycle_sklearn():
 
 	print(cv.cv_results_['mean_test_score'])
 	print(cv.best_params_)
+
+	cbm.CBMExplainer(cv.best_estimator_).plot_importance()

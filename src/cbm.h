@@ -144,7 +144,6 @@ namespace cbm
                 {
                     for (size_t k = 0; k <= x_max[j]; k++)
                     {
-
                         // TODO: check if a bin is empty. might be better to remap/exclude the bins?
                         if (y_sum[j][k])
                         {
@@ -164,6 +163,9 @@ namespace cbm
                             }
                         }
                     }
+
+                    // update_y_hat_sum after every feature
+                    update_y_hat_sum(y_hat, y_hat_sum, x, n_examples, n_features);
                 }
 
                 // prediction
