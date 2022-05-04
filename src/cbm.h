@@ -122,6 +122,8 @@ namespace cbm
 
                     y_sum[j][x_ij] += y[i];
 
+                    y_sum[j][x_ij] += y[i];
+
                     if (enableBinCount)
                         _bin_count[j][x_ij]++;
                 }
