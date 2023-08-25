@@ -1,7 +1,6 @@
 /* Copyright (c) Microsoft Corporation.
    Licensed under the MIT License. */
-#include <stdexcept>
-#include <limits>
+
 #include "cbm.h"
 
 namespace cbm
